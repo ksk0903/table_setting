@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강의장 배치도 편집기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#E9EDF2;
+    --panel:#FFFFFF;
+    --ink:#1F2733;
+    --muted:#75808F;
+    --line:#E4E9EF;
+    --line-strong:#D2DAE3;
+    --accent:#2F6BFF;
+    --accent-soft:#BcD2FF;
+    --sheet:#FCFCFA;
+    --grid:#DBE2EA;
+    --grid-strong:#C9D3DE;
+    --wood:#EAD9BB;
+    --wood-line:#C6A772;
+    --desk:#E8E2D4;
+    --green:#D9E8DA;
+    --green-line:#A7C6AB;
+    --chair:#9DA8B8;
+    --chair-line:#7C889A;
+    --dark:#3E4A5C;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;
+    color:var(--ink);background:var(--bg);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex;flex-direction:column;height:100vh;}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line-strong);
+    z-index:30;box-shadow:0 1px 0 rgba(0,0,0,.02);
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.2px;font-size:15px;}
+  .brand .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .venue-wrap{display:flex;align-items:center;gap:8px;flex:1;min-width:220px;max-width:460px;}
+  .venue-wrap label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;}
+  .venue-input{
+    flex:1;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);
+    padding:8px 12px;border:1px solid var(--line-strong);border-radius:9px;background:#fff;outline:none;
+  }
+  .venue-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .actions{display:flex;gap:7px;flex-wrap:wrap;}
+  .btn{
+    font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;
+    padding:8px 13px;border:1px solid var(--line-strong);border-radius:9px;background:#fff;
+    display:inline-flex;align-items:center;gap:6px;transition:.12s;white-space:nowrap;
+  }
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn svg{width:15px;height:15px;}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn.primary:hover{background:#2257dd;color:#fff;}
+  .btn.danger:hover{border-color:#E0533C;color:#E0533C;}
+  .btn.toggle.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn.toggle.on:hover{background:#2257dd;color:#fff;}
+
+  /* ===== Body ===== */
+  .body{display:flex;flex:1;min-height:0;}
+
+  /* ===== Sidebar ===== */
+  .sidebar{
+    width:212px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line-strong);
+    overflow-y:auto;padding:8px 10px 24px;
+  }
+  .side-hint{font-size:11.5px;color:var(--muted);line-height:1.5;padding:8px 6px 4px;}
+  .group-title{
+    font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:none;
+    margin:14px 6px 7px;display:flex;align-items:center;gap:7px;
+  }
+  .group-title::after{content:"";flex:1;height:1px;background:var(--line);}
+  .palette{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .pitem{
+    display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;
+    padding:9px 4px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;
+    transition:.12s;user-select:none;text-align:center;
+  }
+  .pitem:hover{border-color:var(--accent);background:#F5F8FF;transform:translateY(-1px);}
+  .pitem:active{transform:translateY(0);}
+  .pitem .ic{width:30px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--dark);}
+  .pitem .ic svg{max-width:100%;max-height:100%;}
+  .pitem span{font-size:11.5px;font-weight:600;color:var(--ink);line-height:1.2;}
+
+  /* ===== Stage / capture area ===== */
+  .stage-area{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);padding:14px;overflow:auto;}
+  .sheet-shadow{margin:auto;}
+  #capture{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 6px 26px rgba(31,39,51,.12);width:100%;height:100%;display:flex;flex-direction:column;}
+  .sheet-title{
+    padding:13px 20px;font-size:17px;font-weight:800;letter-spacing:-.3px;color:var(--ink);
+    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#fff;
+  }
+  .sheet-title .pin{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .sheet-title small{margin-left:auto;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;}
+
+  #canvas{
+    position:relative;flex:1;min-height:420px;overflow:hidden;
+    background-color:var(--sheet);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-strong) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid-strong) 1px,transparent 1px);
+    background-size:25px 25px,25px 25px,125px 125px,125px 125px;
+  }
+  #canvas.no-grid{background-image:none;}
+  @keyframes pop{0%{transform:scale(.5);}55%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .item.pop{animation:pop .3s cubic-bezier(.34,1.56,.64,1);}
+  .empty-state{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;color:#A9B3C0;pointer-events:none;text-align:center;padding:20px;
+  }
+  .empty-state svg{width:46px;height:46px;opacity:.55;}
+  .empty-state strong{font-size:15px;font-weight:700;color:#9AA5B3;}
+  .empty-state span{font-size:12.5px;}
+
+  /* ===== Items ===== */
+  .item{position:absolute;cursor:grab;touch-action:none;z-index:1;}
+  .item:active{cursor:grabbing;}
+  .item .shape{
+    position:absolute;inset:0;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--line-strong);background:#fff;transition:box-shadow .12s;
+  }
+  .item:hover .shape{box-shadow:0 0 0 1.5px var(--accent-soft);}
+  .item.selected .shape{box-shadow:0 0 0 1.5px var(--accent);}
+  /* selection ring showing the area extent */
+  .item.selected::before{
+    content:"";position:absolute;inset:-5px;border:1.5px dashed var(--accent);
+    border-radius:9px;pointer-events:none;opacity:.65;
+  }
+  .shape-label{
+    font-size:11px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.82);
+    padding:1px 6px;border-radius:5px;white-space:nowrap;pointer-events:none;line-height:1.3;
+  }
+
+  /* tables */
+  .table-shape{background:var(--wood);border-color:var(--wood-line);}
+  .type-round-table .table-shape{border-radius:50%;}
+  .type-classroom-desk .table-shape{background:var(--desk);border-color:#C9BFA8;}
+  .chairs{position:absolute;inset:0;pointer-events:none;}
+  .chair{
+    position:absolute;width:15px;height:15px;border-radius:4px;
+    background:var(--chair);border:1px solid var(--chair-line);
+    transform:translate(-50%,-50%);box-shadow:inset 0 2px 0 rgba(255,255,255,.25);
+  }
+  .seat-badge{
+    position:relative;z-index:2;min-width:26px;height:24px;padding:0 7px;border-radius:13px;
+    background:#fff;border:1.5px solid var(--wood-line);color:#5b4a2a;
+    font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    cursor:text;box-shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  .seat-badge::after{content:"명";font-size:9px;font-weight:700;margin-left:1px;opacity:.7;}
+  .seat-input{
+    position:relative;z-index:3;width:44px;height:24px;text-align:center;border-radius:8px;
+    border:1.5px solid var(--accent);font-family:inherit;font-size:13px;font-weight:800;outline:none;color:var(--ink);
+  }
+
+  /* chair item */
+  .type-chair .shape{background:var(--chair);border-color:var(--chair-line);border-radius:5px;}
+  /* stage */
+  .type-stage .shape{background:var(--dark);border-color:#2c3645;}
+  .type-stage .shape-label{color:#fff;background:transparent;font-size:14px;font-weight:800;letter-spacing:3px;}
+  /* podium */
+  .type-podium .shape{background:#5a677a;border-color:#47566a;}
+  .type-podium .shape-label{color:#fff;background:transparent;font-size:10px;}
+  /* screen / whiteboard */
+  .type-screen .shape{background:#222c3a;border-color:#222c3a;}
+  .type-screen .shape-label{color:#fff;background:transparent;font-size:10px;letter-spacing:1px;}
+  .type-whiteboard .shape{background:#fff;border-color:#9aa6b6;border-width:3px;}
+  .type-whiteboard .shape-label{font-size:10px;}
+  /* head table */
+  .type-head-table .shape{background:#E4CFA6;border-color:#C29B57;border-width:2px;}
+  /* registration / buffet */
+  .type-registration .shape{background:var(--green);border-color:var(--green-line);}
+  .type-buffet .shape{background:var(--green);border-color:var(--green-line);border-style:dashed;}
+  /* projector / speaker */
+  .type-projector .shape{background:#4b5667;border-color:#3a4456;}
+  .type-projector .shape-label,.type-speaker .shape-label{color:#fff;background:transparent;font-size:9px;}
+  .type-speaker .shape{background:#5a667a;border-color:#46546a;border-radius:4px;}
+  /* door */
+  .type-door .shape{background:repeating-linear-gradient(45deg,#fff,#fff 5px,#eef2f7 5px,#eef2f7 10px);border-color:#9aa6b6;border-bottom:3px solid var(--accent);}
+  .type-door .shape-label{font-size:10px;}
+  /* pillar */
+  .type-pillar .shape{background:repeating-linear-gradient(45deg,#cfd6df,#cfd6df 4px,#bcc5d0 4px,#bcc5d0 8px);border-color:#9aa6b6;}
+  .type-pillar .shape-label{font-size:9px;}
+  /* plant */
+  .type-plant .shape{background:#cfe6cf;border-color:#86b389;border-radius:50%;}
+  .type-plant .shape-label{font-size:9px;background:transparent;}
+  /* banner */
+  .type-banner .shape{background:linear-gradient(180deg,#FF8A5B,#F2643A);border-color:#d8501f;}
+  .type-banner .shape-label{color:#fff;background:transparent;font-size:9px;writing-mode:vertical-rl;letter-spacing:2px;}
+  /* text memo */
+  .type-text .shape{background:transparent;border:1.5px dashed transparent;}
+  .item.type-text:hover .shape{border-color:var(--accent-soft);}
+  .item.type-text.selected .shape{border-color:var(--accent);}
+  .text-shape{font-size:13px;font-weight:700;color:var(--ink);padding:3px 6px;outline:none;text-align:center;white-space:nowrap;}
+
+  /* resize handles — only when exactly one item is selected (.solo) */
+  .handle{position:absolute;width:12px;height:12px;background:#fff;border:1.6px solid var(--accent);border-radius:50%;display:none;z-index:5;box-shadow:0 1px 2px rgba(0,0,0,.18);}
+  .item.selected.solo .handle{display:block;}
+  .h-nw{left:-6px;top:-6px;cursor:nwse-resize;}
+  .h-ne{right:-6px;top:-6px;cursor:nesw-resize;}
+  .h-sw{left:-6px;bottom:-6px;cursor:nesw-resize;}
+  .h-se{right:-6px;bottom:-6px;cursor:nwse-resize;}
+
+  /* rubber band */
+  .band{position:absolute;border:1.5px solid var(--accent);background:rgba(47,107,255,.10);border-radius:3px;pointer-events:none;z-index:8;}
+  .item.rotating{cursor:grabbing;}
+  .item.rotating .shape{box-shadow:0 0 0 1.5px var(--accent)!important;}
+  .angle-tag{position:absolute;transform:translate(-50%,-100%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+
+  /* ===== Room outline (강의장 윤곽) ===== */
+  .item.type-room{z-index:0;pointer-events:none;}
+  .item.type-room.selected{z-index:3;}
+  .item.type-room .handle,.item.type-room .room-tab,.item.type-room .room-size{pointer-events:auto;}
+  .room-shape{position:absolute;inset:0;background:transparent;border:2px solid #5b6675;border-radius:4px;}
+  .item.type-room.selected .room-shape{border-color:var(--accent);}
+  .item.type-room::before{border-color:#9aa6b6;}
+  .room-tab{position:absolute;top:-23px;left:0;background:#5b6675;color:#fff;font-size:11px;font-weight:700;
+    padding:2px 9px;border-radius:6px 6px 0 0;cursor:grab;white-space:nowrap;}
+  .item.type-room.selected .room-tab{background:var(--accent);}
+  .room-size{position:absolute;top:7px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);
+    border:1px solid #cbd3dd;color:var(--ink);font-size:12px;font-weight:700;padding:2px 10px;border-radius:7px;
+    cursor:text;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+
+  /* ===== Alignment guides ===== */
+  .guide{position:absolute;pointer-events:none;z-index:16;display:none;}
+  .guide-v{top:0;bottom:0;width:0;border-left:1.4px dashed #ff3b81;}
+  .guide-h{left:0;right:0;height:0;border-top:1.4px dashed #ff3b81;}
+
+  /* ===== Text font toolbar ===== */
+  .text-toolbar{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:2px;
+    background:#fff;border:1px solid var(--line-strong);border-radius:9px;padding:3px;z-index:21;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);}
+  .text-toolbar button{font-family:inherit;font-weight:800;color:var(--ink);background:#fff;border:none;
+    cursor:pointer;border-radius:6px;width:28px;height:24px;font-size:13px;}
+  .text-toolbar button:first-child{font-size:11px;}
+  .text-toolbar button:hover{background:#EEF3FF;color:var(--accent);}
+  .text-toolbar .tt-val{font-size:11.5px;font-weight:700;color:var(--muted);min-width:20px;text-align:center;}
+
+  /* capturing: hide UI chrome from export */
+  .capturing .item::before{display:none!important;}
+  .capturing .item .shape{box-shadow:none!important;}
+  .capturing .handle{display:none!important;}
+  .capturing .empty-state{display:none!important;}
+  .capturing .guide,.capturing .text-toolbar,.capturing .room-tab,.capturing .angle-tag{display:none!important;}
+
+  /* ===== Footer help ===== */
+  .footer{
+    background:var(--panel);border-top:1px solid var(--line-strong);padding:8px 16px;
+    font-size:11.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+  }
+  .footer b{color:var(--ink);font-weight:700;}
+  .kbd{font-size:10.5px;background:#EEF1F6;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:5px;padding:1px 5px;font-weight:700;color:#4a5566;}
+
+  @media (max-width:760px){
+    .sidebar{width:150px;}
+    .palette{grid-template-columns:1fr;}
+    .venue-wrap{min-width:140px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>강의장 배치도</div>
+    <div class="venue-wrap">
+      <label for="venue">장소명</label>
+      <input id="venue" class="venue-input" type="text" placeholder="예) 그랜드볼룸 A · 2층 세미나실" maxlength="40">
+    </div>
+    <div class="actions">
+      <button class="btn toggle on" id="btnGrid" aria-pressed="true" title="격자선 표시/숨김"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>격자선</button>
+      <button class="btn" id="btnCopy" title="Ctrl+C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>복사</button>
+      <button class="btn" id="btnPaste" title="Ctrl+V"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 4h6v3H9z"/></svg>붙여넣기</button>
+      <button class="btn danger" id="btnDelete" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>선택삭제</button>
+      <button class="btn danger" id="btnClear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2"/><rect x="6" y="6" width="12" height="14" rx="2"/></svg>전체비우기</button>
+      <button class="btn primary" id="btnExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>이미지 저장</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="side-hint">항목을 클릭하면 도면 가운데에 배치됩니다. <b>강의장 윤곽</b>을 먼저 깔고 그 안에 배치하면, 이미지 저장 시 윤곽 안쪽만 저장됩니다.</div>
+      <!-- groups injected by JS -->
+    </aside>
+
+    <!-- STAGE -->
+    <main class="stage-area">
+      <div class="sheet-shadow" style="flex:1;display:flex;width:100%;">
+        <div id="capture">
+          <div class="sheet-title">
+            <span class="pin"></span>
+            <span id="sheetTitle">강의장 배치도</span>
+            <small id="sheetMeta"></small>
+          </div>
+          <div id="canvas">
+            <div class="empty-state" id="emptyState">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <strong>좌측에서 항목을 선택해 배치를 시작하세요</strong>
+              <span>일자형·원탁 테이블은 가운데 인원 숫자를 더블클릭하면 의자가 자동으로 맞춰집니다.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- FOOTER HELP -->
+  <div class="footer">
+    <span><b>이동</b> 드래그</span>
+    <span><b>크기</b> 모서리 점 대각선 드래그</span>
+    <span><b>회전</b> <span class="kbd">Ctrl</span>+모서리 드래그 <span style="opacity:.7">(<span class="kbd">Shift</span> 15° 단위)</span></span>
+    <span><b>다중선택</b> <span class="kbd">Ctrl</span>+클릭 또는 빈 곳 드래그</span>
+    <span><b>복사·붙여넣기</b> <span class="kbd">Ctrl</span>+<span class="kbd">C</span> / <span class="kbd">V</span></span>
+    <span><b>삭제</b> <span class="kbd">Del</span></span>
+    <span><b>인원 수정</b> 숫자 더블클릭</span>
+    <span><b>글자 크기</b> 텍스트 선택 후 A−/A+</span>
+    <span><b>강의장 크기</b> 윤곽 위 칸 더블클릭</span>
+    <span><b>중앙 정렬</b> 이동 중 분홍 점선에 맞춤</span>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Item catalog ---------- */
+const ICON = {
+  rect:   '<svg viewBox="0 0 30 24"><rect x="3" y="7" width="24" height="10" rx="2" fill="#EAD9BB" stroke="#C6A772" stroke-width="1.5"/><circle cx="8" cy="4.5" r="2" fill="#9DA8B8"/><circle cx="15" cy="4.5" r="2" fill="#9DA8B8"/><circle cx="22" cy="4.5" r="2" fill="#9DA8B8"/><circle cx="8" cy="19.5" r="2" fill="#9DA8B8"/><circle cx="15" cy="19.5" r="2" fill="#9DA8B8"/><circle cx="22" cy="19.5" r="2" fill="#9DA8B8"/></svg>',
+  round:  '<svg viewBox="0 0 30 24"><circle cx="15" cy="12" r="7.5" fill="#EAD9BB" stroke="#C6A772" stroke-width="1.5"/><circle cx="15" cy="2.5" r="1.8" fill="#9DA8B8"/><circle cx="15" cy="21.5" r="1.8" fill="#9DA8B8"/><circle cx="5.5" cy="12" r="1.8" fill="#9DA8B8"/><circle cx="24.5" cy="12" r="1.8" fill="#9DA8B8"/><circle cx="8" cy="5" r="1.8" fill="#9DA8B8"/><circle cx="22" cy="5" r="1.8" fill="#9DA8B8"/><circle cx="8" cy="19" r="1.8" fill="#9DA8B8"/><circle cx="22" cy="19" r="1.8" fill="#9DA8B8"/></svg>',
+  desk:   '<svg viewBox="0 0 30 24"><rect x="4" y="5" width="22" height="8" rx="1.5" fill="#E8E2D4" stroke="#C9BFA8" stroke-width="1.5"/><circle cx="9" cy="18" r="2" fill="#9DA8B8"/><circle cx="15" cy="18" r="2" fill="#9DA8B8"/><circle cx="21" cy="18" r="2" fill="#9DA8B8"/></svg>',
+  chair:  '<svg viewBox="0 0 30 24"><rect x="10" y="6" width="10" height="12" rx="3" fill="#9DA8B8" stroke="#7C889A" stroke-width="1.5"/></svg>',
+  stage:  '<svg viewBox="0 0 30 24"><rect x="3" y="6" width="24" height="12" rx="2" fill="#3E4A5C"/><text x="15" y="15" font-size="7" fill="#fff" text-anchor="middle" font-weight="700">무대</text></svg>',
+  podium: '<svg viewBox="0 0 30 24"><rect x="11" y="5" width="8" height="14" rx="1.5" fill="#5a677a"/></svg>',
+  screen: '<svg viewBox="0 0 30 24"><rect x="4" y="9" width="22" height="4" rx="1" fill="#222c3a"/><path d="M15 13v5" stroke="#9aa6b6" stroke-width="1.5"/></svg>',
+  white:  '<svg viewBox="0 0 30 24"><rect x="4" y="6" width="22" height="10" rx="1.5" fill="#fff" stroke="#9aa6b6" stroke-width="2"/></svg>',
+  head:   '<svg viewBox="0 0 30 24"><rect x="4" y="8" width="22" height="8" rx="2" fill="#E4CFA6" stroke="#C29B57" stroke-width="2"/></svg>',
+  reg:    '<svg viewBox="0 0 30 24"><rect x="4" y="8" width="22" height="9" rx="2" fill="#D9E8DA" stroke="#A7C6AB" stroke-width="1.5"/></svg>',
+  buffet: '<svg viewBox="0 0 30 24"><rect x="4" y="8" width="22" height="9" rx="2" fill="#D9E8DA" stroke="#A7C6AB" stroke-width="1.5" stroke-dasharray="3 2"/></svg>',
+  proj:   '<svg viewBox="0 0 30 24"><rect x="8" y="8" width="10" height="7" rx="1.5" fill="#4b5667"/><path d="M18 11l6-3v9l-6-3z" fill="#cfd6df"/></svg>',
+  speaker:'<svg viewBox="0 0 30 24"><rect x="11" y="4" width="8" height="16" rx="1.5" fill="#5a667a"/><circle cx="15" cy="14" r="2.4" fill="#aeb8c6"/></svg>',
+  door:   '<svg viewBox="0 0 30 24"><path d="M8 18V6h6" stroke="#9aa6b6" stroke-width="1.6" fill="none"/><path d="M8 18a10 10 0 0 1 10-10" stroke="#2F6BFF" stroke-width="1.6" fill="none"/></svg>',
+  pillar: '<svg viewBox="0 0 30 24"><rect x="10" y="6" width="10" height="12" fill="#cfd6df" stroke="#9aa6b6" stroke-width="1.5"/><path d="M10 6l10 12M20 6L10 18" stroke="#9aa6b6" stroke-width="1"/></svg>',
+  plant:  '<svg viewBox="0 0 30 24"><circle cx="15" cy="12" r="7" fill="#cfe6cf" stroke="#86b389" stroke-width="1.5"/></svg>',
+  banner: '<svg viewBox="0 0 30 24"><rect x="12" y="3" width="6" height="18" rx="1" fill="#F2643A"/></svg>',
+  text:   '<svg viewBox="0 0 30 24"><text x="15" y="17" font-size="14" fill="#3E4A5C" text-anchor="middle" font-weight="800">T</text></svg>',
+  room:   '<svg viewBox="0 0 30 24"><rect x="3" y="4" width="24" height="16" rx="1.5" fill="none" stroke="#3E4A5C" stroke-width="2"/><path d="M11 4h8" stroke="#fff" stroke-width="3"/><path d="M11 4h8" stroke="#2F6BFF" stroke-width="1.5"/></svg>',
+};
+
+const CATALOG = [
+  { group:'강의장', items:[
+    { type:'room', name:'강의장 윤곽', icon:'room', w:560, h:380 },
+  ]},
+  { group:'테이블 · 좌석', items:[
+    { type:'rect-table',     name:'일자형 테이블', icon:'rect',   w:170, h:62,  seats:8 },
+    { type:'round-table',    name:'원탁 테이블',   icon:'round',  w:115, h:115, seats:10 },
+    { type:'classroom-desk', name:'강의용 책상',   icon:'desk',   w:160, h:42,  seats:3 },
+    { type:'chair',          name:'의자',          icon:'chair',  w:26,  h:26 },
+  ]},
+  { group:'무대 · 발표', items:[
+    { type:'stage',      name:'무대',       icon:'stage',  w:250, h:90 },
+    { type:'head-table', name:'헤드테이블', icon:'head',   w:200, h:52 },
+    { type:'podium',     name:'연단(단상)', icon:'podium', w:52,  h:40 },
+    { type:'screen',     name:'스크린',     icon:'screen', w:170, h:16 },
+    { type:'whiteboard', name:'화이트보드', icon:'white',  w:120, h:16 },
+    { type:'projector',  name:'빔프로젝터', icon:'proj',   w:40,  h:30 },
+    { type:'speaker',    name:'스피커',     icon:'speaker',w:30,  h:40 },
+  ]},
+  { group:'운영 · 기타', items:[
+    { type:'registration', name:'등록데스크',   icon:'reg',    w:130, h:46 },
+    { type:'buffet',       name:'다과·뷔페',    icon:'buffet', w:170, h:54 },
+    { type:'door',         name:'출입문',       icon:'door',   w:66,  h:22 },
+    { type:'pillar',       name:'기둥',         icon:'pillar', w:40,  h:40 },
+    { type:'plant',        name:'화분·식물',    icon:'plant',  w:34,  h:34 },
+    { type:'banner',       name:'현수막·배너',  icon:'banner', w:32,  h:96 },
+    { type:'text',         name:'텍스트 메모',  icon:'text',   w:96,  h:32 },
+  ]},
+];
+
+const TABLE_TYPES = ['rect-table','round-table','classroom-desk'];
+const hasChairs = it => TABLE_TYPES.includes(it.type);
+const defByType = t => { for(const g of CATALOG) for(const d of g.items) if(d.type===t) return d; return null; };
+
+/* ---------- State ---------- */
+let uid = 0;
+const state = { items:[], selected:new Set(), clipboard:[] };
+const canvas = document.getElementById('canvas');
+const emptyState = document.getElementById('emptyState');
+const getItem = id => state.items.find(i=>i.id===id);
+const escapeHtml = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Build sidebar ---------- */
+const sidebar = document.getElementById('sidebar');
+CATALOG.forEach(group=>{
+  const t = document.createElement('div'); t.className='group-title'; t.textContent=group.group;
+  sidebar.appendChild(t);
+  const grid = document.createElement('div'); grid.className='palette';
+  group.items.forEach(def=>{
+    const b = document.createElement('div'); b.className='pitem'; b.title=def.name;
+    b.innerHTML = `<span class="ic">${ICON[def.icon]||''}</span><span>${def.name}</span>`;
+    b.addEventListener('click',()=>addFromCatalog(def));
+    grid.appendChild(b);
+  });
+  sidebar.appendChild(grid);
+});
+
+/* ---------- Create / render item ---------- */
+function createItem(def, x, y){
+  const item = { id:'i'+(++uid), type:def.type, name:def.name, x, y, w:def.w, h:def.h, rot:0 };
+  if(def.seats!==undefined) item.seats = def.seats;
+  if(def.type==='text'){ item.text = '텍스트'; item.fontSize = 14; }
+  if(def.type==='room'){ item.roomLabel = '가로 12m × 세로 8m'; }
+  state.items.push(item);
+  buildEl(item);
+  refreshEmpty();
+  return item;
+}
+
+function positionEl(item){
+  const s=item.el.style;
+  s.left=item.x+'px'; s.top=item.y+'px'; s.width=item.w+'px'; s.height=item.h+'px';
+  s.transform = item.rot ? 'rotate('+item.rot+'deg)' : '';
+  if(textToolbarItem===item) positionTextToolbar(item);
+}
+
+function innerHTML(item){
+  if(hasChairs(item)){
+    return `<div class="chairs"></div>`
+         + `<div class="shape table-shape"><span class="seat-badge" title="더블클릭하여 인원 수정">${item.seats}</span></div>`;
+  }
+  if(item.type==='text'){
+    return `<div class="shape"><span class="text-shape" style="font-size:${item.fontSize||14}px">${escapeHtml(item.text||'텍스트')}</span></div>`;
+  }
+  if(item.type==='room'){
+    return `<div class="shape room-shape"></div>`
+         + `<div class="room-tab">강의장</div>`
+         + `<div class="room-size" title="더블클릭하여 크기 입력">${escapeHtml(item.roomLabel||'크기 입력')}</div>`;
+  }
+  if(item.type==='chair'){
+    return `<div class="shape"></div>`;
+  }
+  return `<div class="shape"><span class="shape-label">${escapeHtml(item.name)}</span></div>`;
+}
+
+function buildEl(item){
+  const el = document.createElement('div');
+  item.el = el;
+  el.className = 'item type-'+item.type;
+  el.dataset.id = item.id;
+  el.innerHTML = innerHTML(item);
+  ['nw','ne','sw','se'].forEach(c=>{
+    const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; el.appendChild(h);
+  });
+  positionEl(item);
+  canvas.appendChild(el);
+  attachItemHandlers(item);
+  if(hasChairs(item)) refreshTable(item);
+}
+
+/* ---------- Chairs ---------- */
+function chairPositions(item){
+  const N=item.seats, W=item.w, H=item.h, out=[], off=12.5;
+  if(item.type==='round-table'){
+    const r=Math.min(W,H)/2+off, cx=W/2, cy=H/2;
+    for(let i=0;i<N;i++){ const a=(i/N)*2*Math.PI - Math.PI/2; out.push({x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)}); }
+  } else if(item.type==='classroom-desk'){
+    for(let i=0;i<N;i++) out.push({x:(i+0.5)/N*W, y:H+off});
+  } else { // rect-table
+    if(W>=H){
+      const t=Math.ceil(N/2), b=N-t;
+      for(let i=0;i<t;i++) out.push({x:(i+0.5)/Math.max(t,1)*W, y:-off});
+      for(let i=0;i<b;i++) out.push({x:(i+0.5)/Math.max(b,1)*W, y:H+off});
+    } else {
+      const l=Math.ceil(N/2), r=N-l;
+      for(let i=0;i<l;i++) out.push({x:-off, y:(i+0.5)/Math.max(l,1)*H});
+      for(let i=0;i<r;i++) out.push({x:W+off, y:(i+0.5)/Math.max(r,1)*H});
+    }
+  }
+  return out;
+}
+function refreshTable(item){
+  const chairsEl = item.el.querySelector('.chairs');
+  const badge = item.el.querySelector('.seat-badge');
+  if(badge) badge.textContent = item.seats;
+  chairsEl.innerHTML = chairPositions(item)
+    .map(p=>`<div class="chair" style="left:${p.x}px;top:${p.y}px"></div>`).join('');
+}
+
+/* ---------- Selection ---------- */
+function clearSelection(){
+  state.selected.forEach(id=>{ const it=getItem(id); if(it) it.el.classList.remove('selected'); });
+  state.selected.clear(); updateChrome();
+}
+function addToSelection(item){ state.selected.add(item.id); item.el.classList.add('selected'); updateChrome(); }
+function selectOnly(item){ clearSelection(); addToSelection(item); }
+function toggleSelection(item){
+  if(state.selected.has(item.id)){ state.selected.delete(item.id); item.el.classList.remove('selected'); }
+  else addToSelection(item);
+  updateChrome();
+}
+function selectAll(){ clearSelection(); state.items.forEach(it=>{ state.selected.add(it.id); it.el.classList.add('selected'); }); updateChrome(); }
+function updateChrome(){
+  state.items.forEach(it=> it.el.classList.remove('solo'));
+  if(state.selected.size===1){
+    const it=getItem([...state.selected][0]);
+    if(it) it.el.classList.add('solo');
+    if(it && it.type==='text') showTextToolbar(it); else hideTextToolbar();
+  } else hideTextToolbar();
+}
+
+/* ---------- Text memo: auto-fit + font size toolbar ---------- */
+function fitTextItem(item){
+  const shape=item.el.querySelector('.text-shape');
+  if(!shape) return;
+  shape.style.fontSize=(item.fontSize||14)+'px';
+  const w=Math.max(40, shape.scrollWidth+4);
+  const h=Math.max(24, shape.scrollHeight+4);
+  item.w=w; item.h=h;
+  positionEl(item);
+}
+let textToolbar=null, textToolbarItem=null;
+function buildTextToolbar(){
+  textToolbar=document.createElement('div');
+  textToolbar.className='text-toolbar';
+  textToolbar.innerHTML=`<button data-d="-2" title="글자 작게">A−</button><span class="tt-val">14</span><button data-d="2" title="글자 크게">A+</button>`;
+  textToolbar.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!textToolbarItem) return;
+      const d=parseInt(b.dataset.d,10);
+      textToolbarItem.fontSize=Math.max(8, Math.min(96, (textToolbarItem.fontSize||14)+d));
+      const s=textToolbarItem.el.querySelector('.text-shape');
+      if(s) s.style.fontSize=textToolbarItem.fontSize+'px';
+      fitTextItem(textToolbarItem);
+      textToolbar.querySelector('.tt-val').textContent=textToolbarItem.fontSize;
+      positionTextToolbar(textToolbarItem);
+    });
+  });
+  canvas.appendChild(textToolbar);
+}
+function showTextToolbar(item){
+  if(!textToolbar) buildTextToolbar();
+  textToolbarItem=item;
+  textToolbar.querySelector('.tt-val').textContent=item.fontSize||14;
+  textToolbar.style.display='flex';
+  positionTextToolbar(item);
+}
+function hideTextToolbar(){ if(textToolbar){ textToolbar.style.display='none'; } textToolbarItem=null; }
+function positionTextToolbar(item){
+  if(!textToolbar) return;
+  textToolbar.style.left=(item.x+item.w/2)+'px';
+  textToolbar.style.top=(item.y-12)+'px';
+}
+
+/* ---------- Item interaction ---------- */
+function attachItemHandlers(item){
+  const el = item.el;
+  el.addEventListener('mousedown', e=>{
+    if(e.button!==0) return;
+    if(e.target.classList.contains('handle')) return;
+    if(e.target.classList.contains('seat-input')) return;
+    if(e.target.isContentEditable) return;
+    e.stopPropagation();
+    if(e.ctrlKey||e.metaKey){ toggleSelection(item); return; }
+    if(!state.selected.has(item.id)) selectOnly(item);
+    startMove(e);
+  });
+
+  // resize / rotate handles
+  el.querySelectorAll('.handle').forEach(h=>{
+    h.addEventListener('mousedown', e=>{
+      e.stopPropagation(); e.preventDefault();
+      if(!state.selected.has(item.id)) selectOnly(item);
+      if(e.ctrlKey||e.metaKey) startRotate(item, e);
+      else startResize(item, h.dataset.corner, e);
+    });
+  });
+
+  if(hasChairs(item)){
+    const badge = el.querySelector('.seat-badge');
+    badge.addEventListener('dblclick', e=>{ e.stopPropagation(); editSeats(item); });
+  }
+
+  if(item.type==='text'){
+    const shape = el.querySelector('.text-shape');
+    shape.addEventListener('dblclick', e=>{
+      e.stopPropagation();
+      shape.contentEditable='true'; shape.focus();
+      const r=document.createRange(); r.selectNodeContents(shape);
+      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    });
+    shape.addEventListener('mousedown', e=>{ if(shape.isContentEditable) e.stopPropagation(); });
+    shape.addEventListener('input', ()=>{ item.text=shape.textContent; fitTextItem(item); });
+    shape.addEventListener('blur', ()=>{ shape.contentEditable='false'; item.text=shape.textContent.trim()||'텍스트'; shape.textContent=item.text; fitTextItem(item); });
+    shape.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); shape.blur(); } });
+  }
+
+  if(item.type==='room'){
+    const sizeEl = el.querySelector('.room-size');
+    sizeEl.addEventListener('dblclick', e=>{
+      e.stopPropagation();
+      sizeEl.contentEditable='true'; sizeEl.focus();
+      const r=document.createRange(); r.selectNodeContents(sizeEl);
+      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    });
+    sizeEl.addEventListener('mousedown', e=>{ if(sizeEl.isContentEditable) e.stopPropagation(); });
+    sizeEl.addEventListener('blur', ()=>{ sizeEl.contentEditable='false'; item.roomLabel=sizeEl.textContent.trim()||'크기 입력'; sizeEl.textContent=item.roomLabel; });
+    sizeEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); sizeEl.blur(); } });
+  }
+}
+
+function startMove(e){
+  const startX=e.clientX, startY=e.clientY;
+  const moving=[...state.selected].map(id=>{ const it=getItem(id); return {it, ox:it.x, oy:it.y}; });
+  const single = moving.length===1 ? moving[0].it : null;
+  // alignment targets (centers): canvas center + every other item's center
+  const targetsX=[], targetsY=[];
+  if(single){
+    const cr=canvas.getBoundingClientRect();
+    targetsX.push(cr.width/2); targetsY.push(cr.height/2);
+    state.items.forEach(it=>{ if(it.id!==single.id){ targetsX.push(it.x+it.w/2); targetsY.push(it.y+it.h/2); } });
+  }
+  const SNAP=6;
+  function mm(ev){
+    const dx=ev.clientX-startX, dy=ev.clientY-startY;
+    moving.forEach(m=>{ m.it.x=Math.round(m.ox+dx); m.it.y=Math.round(m.oy+dy); });
+    if(single){
+      let cx=single.x+single.w/2, cy=single.y+single.h/2, gx=null, gy=null, bx=SNAP+1, by=SNAP+1;
+      targetsX.forEach(t=>{ const d=Math.abs(cx-t); if(d<=SNAP && d<bx){ bx=d; gx=t; } });
+      targetsY.forEach(t=>{ const d=Math.abs(cy-t); if(d<=SNAP && d<by){ by=d; gy=t; } });
+      if(gx!==null){ single.x=Math.round(gx-single.w/2); showGuideV(gx); } else hideGuideV();
+      if(gy!==null){ single.y=Math.round(gy-single.h/2); showGuideH(gy); } else hideGuideH();
+    }
+    moving.forEach(m=> positionEl(m.it));
+  }
+  function mu(){ hideGuides(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }
+  document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+}
+
+/* ---------- Alignment guides ---------- */
+let guideV=null, guideH=null;
+function showGuideV(x){
+  if(!guideV){ guideV=document.createElement('div'); guideV.className='guide guide-v'; canvas.appendChild(guideV); }
+  guideV.style.left=x+'px'; guideV.style.display='block';
+}
+function showGuideH(y){
+  if(!guideH){ guideH=document.createElement('div'); guideH.className='guide guide-h'; canvas.appendChild(guideH); }
+  guideH.style.top=y+'px'; guideH.style.display='block';
+}
+function hideGuideV(){ if(guideV) guideV.style.display='none'; }
+function hideGuideH(){ if(guideH) guideH.style.display='none'; }
+function hideGuides(){ hideGuideV(); hideGuideH(); }
+
+const CORNER_SIGN = { nw:[-1,-1], ne:[1,-1], sw:[-1,1], se:[1,1] };
+
+function startResize(item, corner, e){
+  const cr = canvas.getBoundingClientRect();
+  const rot = (item.rot||0)*Math.PI/180, cos=Math.cos(rot), sin=Math.sin(rot);
+  const [scx,scy] = CORNER_SIGN[corner];
+  const x0=item.x, y0=item.y, w0=item.w, h0=item.h;
+  const C0x=x0+w0/2, C0y=y0+h0/2;
+  // opposite corner stays fixed (anchor), in canvas coords
+  const lax=-scx*w0/2, lay=-scy*h0/2;
+  const Ax=C0x+(cos*lax-sin*lay), Ay=C0y+(sin*lax+cos*lay);
+  const keepSquare = item.type==='round-table';
+  const minW=20, minH=16;
+  function mm(ev){
+    const Mx=ev.clientX-cr.left, My=ev.clientY-cr.top;
+    const vx=Mx-Ax, vy=My-Ay;
+    const lx= cos*vx+sin*vy;      // rotate by -rot into local frame
+    const ly=-sin*vx+cos*vy;
+    let newW=Math.max(minW, lx*scx), newH=Math.max(minH, ly*scy);
+    if(keepSquare){ const s=Math.max(newW,newH); newW=s; newH=s; }
+    const gx=scx*newW/2, gy=scy*newH/2;          // grabbed corner offset from new center, local
+    const Cx=Ax+(cos*gx-sin*gy), Cy=Ay+(sin*gx+cos*gy);
+    item.w=Math.round(newW); item.h=Math.round(newH);
+    item.x=Math.round(Cx-newW/2); item.y=Math.round(Cy-newH/2);
+    positionEl(item);
+    if(hasChairs(item)) refreshTable(item);
+  }
+  function mu(){ document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }
+  document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+}
+
+function startRotate(item, e){
+  const cr = canvas.getBoundingClientRect();
+  const Cx=item.x+item.w/2, Cy=item.y+item.h/2;  // center is rotation-invariant
+  const start=Math.atan2((e.clientY-cr.top)-Cy, (e.clientX-cr.left)-Cx);
+  const startRot=item.rot||0;
+  item.el.classList.add('rotating');
+  function mm(ev){
+    const a=Math.atan2((ev.clientY-cr.top)-Cy, (ev.clientX-cr.left)-Cx);
+    let deg=startRot+(a-start)*180/Math.PI;
+    deg = ev.shiftKey ? Math.round(deg/15)*15 : Math.round(deg);
+    item.rot=((deg%360)+360)%360;
+    positionEl(item);
+    showAngle(item);
+  }
+  function mu(){ item.el.classList.remove('rotating'); hideAngle(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }
+  document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+}
+
+/* live angle readout while rotating */
+let angleTag=null;
+function showAngle(item){
+  if(!angleTag){ angleTag=document.createElement('div'); angleTag.className='angle-tag'; canvas.appendChild(angleTag); }
+  angleTag.textContent=Math.round(item.rot)+'°';
+  angleTag.style.left=(item.x+item.w/2)+'px';
+  angleTag.style.top=(item.y-14)+'px';
+  angleTag.style.display='block';
+}
+function hideAngle(){ if(angleTag) angleTag.style.display='none'; }
+
+/* ---------- Seat editing ---------- */
+function editSeats(item){
+  const badge = item.el.querySelector('.seat-badge');
+  const input = document.createElement('input');
+  input.type='number'; input.min='1'; input.max='40'; input.value=item.seats; input.className='seat-input';
+  badge.replaceWith(input); input.focus(); input.select();
+  let done=false;
+  const commit = ()=>{
+    if(done) return; done=true;
+    let v=parseInt(input.value,10); if(isNaN(v)) v=item.seats;
+    item.seats=Math.max(1,Math.min(40,v));
+    rebuild(item);
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', ev=>{
+    if(ev.key==='Enter'){ ev.preventDefault(); commit(); }
+    else if(ev.key==='Escape'){ done=true; rebuild(item); }
+  });
+  input.addEventListener('mousedown', e=> e.stopPropagation());
+}
+function rebuild(item){
+  const wasSelected = state.selected.has(item.id);
+  item.el.innerHTML = innerHTML(item);
+  ['nw','ne','sw','se'].forEach(c=>{ const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; item.el.appendChild(h); });
+  attachItemHandlers(item);
+  if(hasChairs(item)) refreshTable(item);
+  if(wasSelected){ item.el.classList.add('selected'); updateChrome(); }
+}
+
+/* ---------- Add from catalog ---------- */
+function addFromCatalog(def){
+  const r = canvas.getBoundingClientRect();
+  const W = r.width  > 60 ? r.width  : 800;
+  const H = r.height > 60 ? r.height : 500;
+  const n = state.items.length % 8;
+  let x = Math.round(W/2 - def.w/2 - 50 + n*24);
+  let y = Math.round(H/2 - def.h/2 - 50 + n*24);
+  x = Math.max(10, x); y = Math.max(10, y);
+  const item = createItem(def, x, y);
+  selectOnly(item);
+  item.el.classList.add('pop');
+  setTimeout(()=>item.el.classList.remove('pop'), 320);
+  try{ item.el.scrollIntoView({block:'nearest', inline:'nearest'}); }catch(e){}
+}
+
+/* ---------- Clipboard / delete ---------- */
+function copySel(){
+  state.clipboard = [...state.selected].map(id=>{
+    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel}=getItem(id);
+    return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel};
+  });
+}
+function pasteSel(){
+  if(!state.clipboard.length) return;
+  clearSelection();
+  state.clipboard.forEach(d=>{
+    const item = { id:'i'+(++uid), type:d.type, name:d.name, x:d.x+24, y:d.y+24, w:d.w, h:d.h, rot:d.rot||0 };
+    if(d.seats!==undefined) item.seats=d.seats;
+    if(d.text!==undefined) item.text=d.text;
+    if(d.fontSize!==undefined) item.fontSize=d.fontSize;
+    if(d.roomLabel!==undefined) item.roomLabel=d.roomLabel;
+    state.items.push(item); buildEl(item); addToSelection(item);
+  });
+  // cascade subsequent pastes
+  state.clipboard = state.clipboard.map(d=>({...d, x:d.x+24, y:d.y+24}));
+  refreshEmpty();
+}
+function deleteSel(){
+  [...state.selected].forEach(id=>{ const it=getItem(id); if(it){ it.el.remove(); } });
+  state.items = state.items.filter(it=>!state.selected.has(it.id));
+  state.selected.clear(); updateChrome(); refreshEmpty();
+}
+function clearAll(){
+  if(state.items.length && !confirm('도면의 모든 항목을 지울까요?')) return;
+  state.items.forEach(it=>it.el.remove());
+  state.items=[]; state.selected.clear(); updateChrome(); refreshEmpty();
+}
+function nudge(key, step){
+  if(!state.selected.size) return;
+  const dx = key==='ArrowLeft'?-step:key==='ArrowRight'?step:0;
+  const dy = key==='ArrowUp'?-step:key==='ArrowDown'?step:0;
+  state.selected.forEach(id=>{ const it=getItem(id); it.x+=dx; it.y+=dy; positionEl(it); });
+}
+
+/* ---------- Rubber-band selection ---------- */
+canvas.addEventListener('mousedown', e=>{
+  if(e.button!==0) return;
+  if(e.target!==canvas && e.target!==emptyState) return;
+  if(!(e.ctrlKey||e.metaKey)) clearSelection();
+  const r = canvas.getBoundingClientRect();
+  const sx=e.clientX-r.left, sy=e.clientY-r.top;
+  const band=document.createElement('div'); band.className='band'; canvas.appendChild(band);
+  function mm(ev){
+    const cx=ev.clientX-r.left, cy=ev.clientY-r.top;
+    const x=Math.min(sx,cx), y=Math.min(sy,cy), w=Math.abs(cx-sx), h=Math.abs(cy-sy);
+    band.style.left=x+'px'; band.style.top=y+'px'; band.style.width=w+'px'; band.style.height=h+'px';
+  }
+  function mu(ev){
+    document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu);
+    const cx=ev.clientX-r.left, cy=ev.clientY-r.top;
+    const bx=Math.min(sx,cx), by=Math.min(sy,cy), bw=Math.abs(cx-sx), bh=Math.abs(cy-sy);
+    band.remove();
+    if(bw<4 && bh<4) return; // simple click
+    state.items.forEach(it=>{
+      const overlap = it.x < bx+bw && it.x+it.w > bx && it.y < by+bh && it.y+it.h > by;
+      if(overlap) addToSelection(it);
+    });
+  }
+  document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+});
+
+/* ---------- Keyboard ---------- */
+document.addEventListener('keydown', e=>{
+  const ae=document.activeElement;
+  const typing = ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable);
+  if(typing){ if(e.key==='Escape') ae.blur(); return; }
+  const mod = e.ctrlKey||e.metaKey;
+  if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); deleteSel(); }
+  else if(mod && e.key.toLowerCase()==='c'){ e.preventDefault(); copySel(); }
+  else if(mod && e.key.toLowerCase()==='v'){ e.preventDefault(); pasteSel(); }
+  else if(mod && e.key.toLowerCase()==='a'){ e.preventDefault(); selectAll(); }
+  else if(mod && e.key.toLowerCase()==='d'){ e.preventDefault(); copySel(); pasteSel(); }
+  else if(e.key==='Escape'){ clearSelection(); }
+  else if(e.key.startsWith('Arrow')){ e.preventDefault(); nudge(e.key, e.shiftKey?10:2); }
+});
+
+/* ---------- Empty state ---------- */
+function refreshEmpty(){ emptyState.style.display = state.items.length ? 'none' : 'flex'; }
+
+/* ---------- Venue title ---------- */
+const venueInput=document.getElementById('venue');
+const sheetTitle=document.getElementById('sheetTitle');
+venueInput.addEventListener('input', ()=>{ sheetTitle.textContent = venueInput.value.trim() || '강의장 배치도'; });
+
+/* ---------- Toolbar buttons ---------- */
+document.getElementById('btnCopy').addEventListener('click', copySel);
+document.getElementById('btnPaste').addEventListener('click', pasteSel);
+document.getElementById('btnDelete').addEventListener('click', deleteSel);
+document.getElementById('btnClear').addEventListener('click', clearAll);
+document.getElementById('btnExport').addEventListener('click', exportPNG);
+
+/* ---------- Grid toggle ---------- */
+const btnGrid=document.getElementById('btnGrid');
+btnGrid.addEventListener('click', ()=>{
+  const off = canvas.classList.toggle('no-grid');
+  btnGrid.classList.toggle('on', !off);
+  btnGrid.setAttribute('aria-pressed', String(!off));
+});
+
+/* ---------- Export PNG ---------- */
+async function exportPNG(){
+  if(typeof html2canvas==='undefined'){ alert('이미지 변환 도구를 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.'); return; }
+  clearSelection();
+  document.getElementById('sheetMeta').textContent = new Date().toLocaleDateString('ko-KR');
+  const room = state.items.find(i=>i.type==='room');
+  document.body.classList.add('capturing');
+  const scale=2;
+  try{
+    let outCanvas;
+    if(room){
+      // capture the drawing area, then crop to the room outline only
+      const full = await html2canvas(canvas, { backgroundColor:'#ffffff', scale, useCORS:true });
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(room.w*scale));
+      c.height= Math.max(1, Math.round(room.h*scale));
+      const ctx = c.getContext('2d');
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.drawImage(full, room.x*scale, room.y*scale, room.w*scale, room.h*scale, 0,0, c.width, c.height);
+      outCanvas = c;
+    } else {
+      outCanvas = await html2canvas(document.getElementById('capture'), { backgroundColor:'#ffffff', scale, useCORS:true });
+    }
+    const a=document.createElement('a');
+    a.download=(venueInput.value.trim()||'강의장_배치도')+'.png';
+    a.href=outCanvas.toDataURL('image/png'); a.click();
+  }catch(err){ alert('이미지 저장 중 문제가 발생했습니다.'); console.error(err); }
+  finally{ document.body.classList.remove('capturing'); }
+}
+
+/* ---------- Start empty ---------- */
+refreshEmpty();
+</script>
+</body>
+</html>
