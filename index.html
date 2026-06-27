@@ -75,7 +75,7 @@
 
   /* ===== Sidebar ===== */
   .sidebar{
-    width:212px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line-strong);
+    width:292px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line-strong);
     overflow-y:auto;padding:8px 10px 24px;
   }
   .side-hint{font-size:11.5px;color:var(--muted);line-height:1.5;padding:8px 6px 4px;}
@@ -84,7 +84,7 @@
     margin:14px 6px 7px;display:flex;align-items:center;gap:7px;
   }
   .group-title::after{content:"";flex:1;height:1px;background:var(--line);}
-  .palette{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .palette{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
   .pitem{
     display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;
     padding:9px 4px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;
@@ -216,6 +216,13 @@
   .h-ne{right:-6px;top:-6px;cursor:nesw-resize;}
   .h-sw{left:-6px;bottom:-6px;cursor:nesw-resize;}
   .h-se{right:-6px;bottom:-6px;cursor:nwse-resize;}
+  .rotate-handle{position:absolute;left:50%;top:-32px;width:22px;height:22px;margin-left:-11px;border-radius:50%;
+    background:#fff;border:1.6px solid var(--select);display:none;align-items:center;justify-content:center;
+    cursor:grab;z-index:7;box-shadow:0 2px 5px rgba(0,0,0,.22);}
+  .rotate-handle::before{content:"";position:absolute;top:21px;left:50%;width:1.5px;height:11px;background:var(--select);transform:translateX(-50%);}
+  .rotate-handle svg{width:13px;height:13px;color:var(--select);pointer-events:none;}
+  .item.selected.solo .rotate-handle{display:flex;}
+  .item.rotating .rotate-handle{cursor:grabbing;}
 
   /* rubber band */
   .band{position:absolute;border:1.5px solid var(--select);background:rgba(47,107,255,.10);border-radius:3px;pointer-events:none;z-index:8;}
@@ -224,9 +231,9 @@
   .angle-tag{position:absolute;transform:translate(-50%,-100%);background:var(--select);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
 
   /* ===== Room outline (강의장 윤곽) ===== */
-  .item.type-room{z-index:0;pointer-events:none;}
+  .item.type-room{z-index:1;pointer-events:none;}
   .item.type-room.selected{z-index:3;}
-  .item.type-room .handle,.item.type-room .room-tab,.item.type-room .room-size{pointer-events:auto;}
+  .item.type-room .handle,.item.type-room .rotate-handle,.item.type-room .room-tab,.item.type-room .room-size{pointer-events:auto;}
   .room-shape{position:absolute;inset:0;background:transparent;border:2px solid #5b6675;border-radius:4px;}
   .item.type-room.selected .room-shape{border-color:var(--select);}
   .item.type-room::before{border-color:#9aa6b6;}
@@ -241,6 +248,14 @@
   .guide{position:absolute;pointer-events:none;z-index:16;display:none;}
   .guide-v{top:0;bottom:0;width:0;border-left:1.4px dashed #ff3b81;}
   .guide-h{left:0;right:0;height:0;border-top:1.4px dashed #ff3b81;}
+  #gapLayer{position:absolute;inset:0;pointer-events:none;z-index:17;}
+  .gap-line{position:absolute;border-top:1.5px dashed #ff7a1a;}
+  .gap-line.vert{border-top:none;border-left:1.5px dashed #ff7a1a;}
+  .gap-seg.eq .gap-line{border-color:#15b46a;}
+  .gap-label{position:absolute;transform:translate(-50%,-50%);background:#fff;border:1px solid #ff7a1a;color:#c25600;
+    font-size:10px;font-weight:800;padding:0 5px;border-radius:7px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .gap-seg.eq .gap-label{border-color:#15b46a;color:#0c8a4f;}
+  .align-bar button.on{background:var(--accent);color:#fff;}
 
   /* ===== Text font toolbar ===== */
   .text-toolbar{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:2px;
@@ -256,6 +271,7 @@
   .capturing .item::before{display:none!important;}
   .capturing .item .shape{box-shadow:none!important;}
   .capturing .handle{display:none!important;}
+  .capturing .rotate-handle,.capturing #gapLayer{display:none!important;}
   .capturing .empty-state{display:none!important;}
   .capturing .guide,.capturing .text-toolbar,.capturing .room-tab,.capturing .angle-tag{display:none!important;}
 
@@ -267,9 +283,9 @@
   .footer b{color:var(--ink);font-weight:700;}
   .kbd{font-size:10.5px;background:#EEF1F6;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:5px;padding:1px 5px;font-weight:700;color:#4a5566;}
 
-  @media (max-width:760px){
-    .sidebar{width:150px;}
-    .palette{grid-template-columns:1fr;}
+  @media (max-width:820px){
+    .sidebar{width:200px;}
+    .palette{grid-template-columns:1fr 1fr;}
     .venue-wrap{min-width:140px;}
   }
 
@@ -309,6 +325,7 @@
     background:#fff;border:1px solid var(--line-strong);border-radius:8px;padding:7px 8px;outline:none;width:100%;}
   .auto-card input:focus,.auto-card select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
   .auto-row{display:flex;gap:8px;}
+  .gap-hint{font-size:10.5px;color:var(--muted);margin:-2px 2px 2px;}
   .auto-row label{flex:1;min-width:0;}
   .auto-go{justify-content:center;margin-top:1px;width:100%;}
 
@@ -362,6 +379,81 @@
   body.dark .text-toolbar{background:#1F2733;border-color:#37424f;}
   body.dark .text-toolbar button{background:#1F2733;color:var(--ink);}
   body.dark .text-toolbar button:hover{background:#26344a;color:#fff;}
+
+  /* ===== Front marker (상단 = 전면) ===== */
+  .front-band{position:absolute;top:0;left:0;right:0;height:20px;display:flex;align-items:center;justify-content:center;
+    font-size:10.5px;font-weight:800;letter-spacing:3px;color:#A9B3C0;background:linear-gradient(rgba(0,0,0,.05),transparent);
+    pointer-events:none;z-index:0;}
+  body.school-mode .front-band{height:30px;color:#f3fff8;letter-spacing:4px;
+    background:linear-gradient(#356b50,#2c5e45);border-bottom:4px solid #8a6a45;
+    box-shadow:inset 0 0 22px rgba(0,0,0,.25);text-shadow:0 1px 2px rgba(0,0,0,.35);}
+
+  /* ===== School mode background (교실 느낌) ===== */
+  body.school-mode #canvas{background-color:#F4E9D6;}
+  body.school-mode #canvas::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:
+      repeating-linear-gradient(90deg, rgba(150,110,60,.07) 0 1.5px, transparent 1.5px 70px),
+      repeating-linear-gradient(0deg,  rgba(150,110,60,.05) 0 1.5px, transparent 1.5px 34px);}
+
+  /* ===== Background image ===== */
+  /* ===== Background image (movable/resizable element) ===== */
+  .bg-image{display:none;}
+  .item{z-index:2;}
+  .type-room{z-index:1;}
+  .type-bgimage{z-index:0;}
+  .bg-shape{border:none!important;background:transparent!important;padding:0;overflow:hidden;border-radius:4px;box-shadow:none!important;}
+  .bg-shape img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none;}
+  .type-bgimage.selected .bg-shape{outline:1.5px dashed var(--select);outline-offset:1px;}
+  .bg-card{display:flex;gap:7px;margin:6px 4px 10px;}
+  .bg-card .btn{flex:1;justify-content:center;}
+  .opacity-card{margin:0 4px 12px;display:flex;flex-direction:column;gap:6px;}
+  .op-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600;}
+  .op-row span{flex-shrink:0;width:62px;}
+  .op-row input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
+
+  /* ===== Align bar (다중선택 정렬) ===== */
+  .align-bar{position:fixed;bottom:46px;left:50%;z-index:45;display:none;align-items:center;gap:2px;
+    background:var(--panel);border:1px solid var(--line-strong);border-radius:11px;padding:5px 9px;
+    box-shadow:0 6px 20px rgba(0,0,0,.16);transform:translateX(-50%) translateY(10px);opacity:0;transition:.15s;}
+  .align-bar.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
+  .align-bar .align-title{font-size:11px;font-weight:800;color:var(--muted);margin-right:5px;white-space:nowrap;}
+  .align-bar button{width:30px;height:28px;border:none;background:transparent;border-radius:7px;cursor:pointer;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;}
+  .align-bar button:hover{background:#FFF3E2;color:var(--accent);}
+  .align-bar button svg{width:17px;height:17px;}
+  .align-bar .sep{width:1px;height:18px;background:var(--line-strong);margin:0 4px;}
+  body.dark .align-bar button:hover{background:#26344a;color:#fff;}
+
+  /* ===== School item types ===== */
+  .type-blackboard .shape{background:#2f6b4f;border-color:#234f3b;}
+  .type-blackboard .shape-label{color:#eafff2;background:transparent;letter-spacing:2px;}
+  .type-teacher-desk .shape{background:#C9A06A;border-color:#A07B46;}
+  .type-teacher-desk .shape-label{color:#3a2a14;}
+  .type-locker .shape{background:repeating-linear-gradient(90deg,#aebccd,#aebccd 21px,#93a3b6 21px,#93a3b6 23px);border-color:#7f8ea1;}
+  .type-locker .shape-label{font-size:10px;color:#33404f;}
+  .type-corkboard .shape{background:#d8b483;border-color:#b58c52;}
+  .type-corkboard .shape-label{color:#5a4326;}
+  .type-trash .shape,.type-monitor .shape{background:transparent!important;border:none!important;box-shadow:none!important;padding:0;}
+  .emoji-shape{display:flex;align-items:center;justify-content:center;}
+  .emoji{line-height:1;display:block;}
+  .type-student-desk .table-shape,.type-group-desk .table-shape{background:#EAD9BB;border-color:#C6A772;}
+
+  /* name on single desk / group-name badge */
+  .seat-badge.name-badge{min-width:0;padding:0 6px;background:#fff;border-color:var(--accent);color:#5a4a2a;white-space:nowrap;}
+  .seat-badge.name-badge::after{content:"";}
+  .seat-badge.name-badge.empty{color:#bbb;border-style:dashed;}
+  .seat-badge.name-badge.empty::before{content:"빈자리";font-size:9px;}
+
+  /* sidebar textarea (roster) */
+  .roster-card textarea{font-family:inherit;font-size:12px;color:var(--ink);background:#fff;border:1px solid var(--line-strong);
+    border-radius:8px;padding:7px 8px;outline:none;width:100%;height:88px;resize:vertical;line-height:1.4;}
+  .roster-card textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  body.dark .roster-card textarea{background:#232C39;color:#EAF0F8;border-color:#37424f;}
+
+  /* mode-specific cards */
+  .school-only{display:none;}
+  body.school-mode .school-only{display:flex;}
+  body.school-mode .hall-only{display:none;}
 </style>
 </head>
 <body>
@@ -374,6 +466,8 @@
       <input id="venue" class="venue-input" type="text" placeholder="예) 그랜드볼룸 A · 2층 세미나실" maxlength="40">
     </div>
     <div class="actions">
+      <button class="btn toggle" id="btnSchool" title="강의장/학교 전환"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4L2 9l10 5 10-5-10-5z"/><path d="M6 11v4c0 1 3 2 6 2s6-1 6-2v-4"/></svg>학교버전</button>
+      <button class="btn" id="btnLabel" title="테이블 표시: 인원수 ↔ 모둠명"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7"/></svg>인원/모둠명</button>
       <button class="btn" id="btnTheme" title="라이트/다크 전환"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>다크</button>
       <button class="btn toggle on" id="btnGrid" aria-pressed="true" title="격자선 표시/숨김"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>격자선</button>
       <button class="btn" id="btnCopy" title="Ctrl+C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>복사</button>
@@ -388,7 +482,16 @@
   <div class="body">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-      <div class="auto-card">
+      <div class="bg-card">
+        <button class="btn" id="bgPick" title="배경으로 쓸 이미지 파일 선택"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.6"/><path d="M21 16l-5-5L5 20"/></svg>배경 이미지</button>
+        <button class="btn" id="bgClear" title="배경 이미지 제거">제거</button>
+        <input type="file" id="bgFile" accept="image/*" hidden>
+      </div>
+      <div class="opacity-card">
+        <label class="op-row"><span>배경 투명도</span><input type="range" id="bgOpacity" min="10" max="100" value="100"></label>
+        <label class="op-row"><span>윤곽 투명도</span><input type="range" id="roomOpacity" min="10" max="100" value="100"></label>
+      </div>
+      <div class="auto-card hall-only">
         <div class="auto-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="1.6" fill="currentColor"/><circle cx="14" cy="12" r="1.6" fill="currentColor"/><circle cx="10" cy="19" r="1.6" fill="currentColor"/></svg>자동배치</div>
         <label>정원 (명)
           <input id="apCapacity" type="number" min="1" max="600" value="30">
@@ -410,10 +513,47 @@
         <label>모둠당 인원
           <input id="apPerGroup" type="number" min="1" max="40" value="10">
         </label>
+        <div class="auto-row">
+          <label>가로 간격<input id="apGapX" type="number" min="0" max="400" value="10"></label>
+          <label>세로 간격<input id="apGapY" type="number" min="0" max="400" value="10"></label>
+        </div>
+        <div class="gap-hint">0 = 자동(영역 채움)</div>
         <button class="btn primary auto-go" id="apGo">자동 배치 생성</button>
       </div>
-      <div class="side-hint">항목을 클릭하면 도면 가운데에 배치됩니다. <b>강의장 윤곽</b>을 먼저 깔고 그 안에 배치하면, 이미지 저장 시 윤곽 안쪽만 저장됩니다.</div>
-      <!-- groups injected by JS -->
+
+      <div class="auto-card school-only" style="flex-direction:column">
+        <div class="auto-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>자동배치 (교실)</div>
+        <div class="auto-row">
+          <label>가로 (열 수)<input id="sCols" type="number" min="1" max="20" value="6"></label>
+          <label>세로 (행 수)<input id="sRows" type="number" min="1" max="20" value="5"></label>
+        </div>
+        <label>책상 종류
+          <select id="sDeskType">
+            <option value="single">개인 책상</option>
+            <option value="group">모둠 책상</option>
+          </select>
+        </label>
+        <label>책상당 인원
+          <input id="sPerTable" type="number" min="1" max="8" value="1">
+        </label>
+        <div class="auto-row">
+          <label>가로 간격<input id="sGapX" type="number" min="0" max="400" value="10"></label>
+          <label>세로 간격<input id="sGapY" type="number" min="0" max="400" value="10"></label>
+        </div>
+        <button class="btn primary auto-go" id="sGo">자동 배치 생성</button>
+      </div>
+
+      <div class="auto-card school-only roster-card" style="flex-direction:column">
+        <div class="auto-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11a4 4 0 1 0-8 0M4 21v-1a6 6 0 0 1 12 0v1"/><circle cx="12" cy="7" r="0"/></svg>자리 배정 (명단)</div>
+        <textarea id="rosterNames" placeholder="이름을 한 줄에 하나씩&#10;(엑셀에서 복사·붙여넣기 가능)"></textarea>
+        <div class="auto-row">
+          <button class="btn auto-go" id="rosterClear" style="flex:1">지우기</button>
+          <button class="btn primary auto-go" id="rosterAssign" style="flex:2">랜덤배정</button>
+        </div>
+      </div>
+
+      <div class="side-hint" id="sideHint">항목을 클릭하면 도면 가운데에 배치됩니다. <b>윤곽</b>을 먼저 깔고 그 안에 배치하면, 이미지 저장 시 윤곽 안쪽만 저장됩니다.</div>
+      <div id="paletteGroups"></div>
     </aside>
 
     <!-- STAGE -->
@@ -429,6 +569,8 @@
             </div>
           </div>
           <div id="canvas">
+            <img id="bgImage" class="bg-image" alt="">
+            <div class="front-band" id="frontBand">▲&nbsp;&nbsp;전 면&nbsp;&nbsp;( FRONT )&nbsp;&nbsp;▲</div>
             <div class="empty-state" id="emptyState">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
               <strong>좌측에서 항목을 선택해 배치를 시작하세요</strong>
@@ -438,6 +580,23 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- ALIGN BAR (다중선택 시) -->
+  <div class="align-bar" id="alignBar">
+    <span class="align-title">정렬</span>
+    <button data-al="left" title="왼쪽 정렬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="1" fill="currentColor" stroke="none"/><rect x="7" y="14" width="8" height="4" rx="1" fill="currentColor" stroke="none"/></svg></button>
+    <button data-al="hcenter" title="가로 가운데 정렬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><rect x="5" y="6" width="14" height="4" rx="1" fill="currentColor" stroke="none"/><rect x="7" y="14" width="10" height="4" rx="1" fill="currentColor" stroke="none"/></svg></button>
+    <button data-al="right" title="오른쪽 정렬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 3v18"/><rect x="5" y="6" width="12" height="4" rx="1" fill="currentColor" stroke="none"/><rect x="9" y="14" width="8" height="4" rx="1" fill="currentColor" stroke="none"/></svg></button>
+    <span class="sep"></span>
+    <button data-al="top" title="위쪽 정렬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18"/><rect x="6" y="7" width="4" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="7" width="4" height="8" rx="1" fill="currentColor" stroke="none"/></svg></button>
+    <button data-al="vcenter" title="세로 가운데 정렬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18"/><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="7" width="4" height="10" rx="1" fill="currentColor" stroke="none"/></svg></button>
+    <button data-al="bottom" title="아래쪽 정렬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18"/><rect x="6" y="5" width="4" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="9" width="4" height="8" rx="1" fill="currentColor" stroke="none"/></svg></button>
+    <span class="sep"></span>
+    <button id="btnGroup" title="그룹 만들기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/><path d="M11 7h4a2 2 0 0 1 2 2v4" stroke-dasharray="2 2"/></svg></button>
+    <button id="btnUngroup" title="그룹 해제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+    <span class="sep"></span>
+    <button id="btnGapCheck" title="요소 간 간격 일치 확인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7v10M20 7v10M4 12h16"/><path d="M7 9l-3 3 3 3M17 9l3 3-3 3"/></svg></button>
   </div>
 
   <!-- ZOOM CONTROL -->
@@ -486,6 +645,14 @@ const ICON = {
   banner: '<svg viewBox="0 0 30 24"><rect x="12" y="3" width="6" height="18" rx="1" fill="#F2643A"/></svg>',
   text:   '<svg viewBox="0 0 30 24"><text x="15" y="17" font-size="14" fill="#3E4A5C" text-anchor="middle" font-weight="800">T</text></svg>',
   room:   '<svg viewBox="0 0 30 24"><rect x="3" y="4" width="24" height="16" rx="1.5" fill="none" stroke="#3E4A5C" stroke-width="2"/><path d="M11 4h8" stroke="#fff" stroke-width="3"/><path d="M11 4h8" stroke="#F18D01" stroke-width="1.5"/></svg>',
+  sdesk:  '<svg viewBox="0 0 30 24"><rect x="7" y="5" width="16" height="8" rx="1.5" fill="#EAD9BB" stroke="#C6A772" stroke-width="1.5"/><rect x="11" y="16" width="8" height="5" rx="1.5" fill="#9DA8B8"/></svg>',
+  gdesk:  '<svg viewBox="0 0 30 24"><rect x="7" y="8" width="16" height="9" rx="2" fill="#EAD9BB" stroke="#C6A772" stroke-width="1.5"/><circle cx="11" cy="5" r="1.7" fill="#9DA8B8"/><circle cx="19" cy="5" r="1.7" fill="#9DA8B8"/><circle cx="11" cy="20" r="1.7" fill="#9DA8B8"/><circle cx="19" cy="20" r="1.7" fill="#9DA8B8"/></svg>',
+  teacher:'<svg viewBox="0 0 30 24"><rect x="5" y="8" width="20" height="9" rx="1.5" fill="#C9A06A" stroke="#A07B46" stroke-width="1.5"/><rect x="13" y="4" width="4" height="4" rx="1" fill="#A07B46"/></svg>',
+  board:  '<svg viewBox="0 0 30 24"><rect x="3" y="4" width="24" height="13" rx="1.5" fill="#2f6b4f" stroke="#234f3b" stroke-width="1.5"/><rect x="13" y="17" width="4" height="3" fill="#8a6d4b"/></svg>',
+  monitor:'<span style="font-size:20px;line-height:1">📺</span>',
+  locker: '<svg viewBox="0 0 30 24"><rect x="6" y="3" width="18" height="18" rx="1.5" fill="#aebccd" stroke="#7f8ea1" stroke-width="1.5"/><path d="M15 3v18M6 9h18M6 15h18" stroke="#7f8ea1" stroke-width="1"/></svg>',
+  cork:   '<svg viewBox="0 0 30 24"><rect x="4" y="5" width="22" height="14" rx="1.5" fill="#d8b483" stroke="#b58c52" stroke-width="1.5"/><circle cx="10" cy="10" r="1.3" fill="#e0533c"/><circle cx="20" cy="14" r="1.3" fill="#2f6bff"/></svg>',
+  trash:  '<span style="font-size:20px;line-height:1">🗑️</span>',
 };
 
 const CATALOG = [
@@ -518,13 +685,64 @@ const CATALOG = [
   ]},
 ];
 
-const TABLE_TYPES = ['rect-table','round-table','classroom-desk'];
+const CATALOG_SCHOOL = [
+  { group:'교실', items:[
+    { type:'room', name:'교실 윤곽', icon:'room', w:560, h:380 },
+  ]},
+  { group:'책상 · 좌석', items:[
+    { type:'student-desk', name:'학생 책상', icon:'sdesk',   w:62,  h:42, seats:1, seatSide:'bottom' },
+    { type:'group-desk',   name:'모둠 책상', icon:'gdesk',   w:120, h:80, seats:4 },
+    { type:'teacher-desk', name:'교탁',      icon:'teacher', w:90,  h:46 },
+    { type:'chair',        name:'의자',      icon:'chair',   w:26,  h:26 },
+  ]},
+  { group:'교실 비품', items:[
+    { type:'blackboard', name:'칠판',      icon:'board',   w:240, h:46 },
+    { type:'monitor',    name:'모니터·TV', icon:'monitor', w:90,  h:64 },
+    { type:'locker',     name:'사물함',    icon:'locker',  w:150, h:42 },
+    { type:'corkboard',  name:'게시판',    icon:'cork',    w:120, h:70 },
+  ]},
+  { group:'기타', items:[
+    { type:'door',  name:'출입문',     icon:'door',  w:66, h:22 },
+    { type:'trash', name:'쓰레기통',   icon:'trash', w:30, h:34 },
+    { type:'plant', name:'화분·식물',  icon:'plant', w:34, h:34 },
+    { type:'text',  name:'텍스트 메모', icon:'text',  w:96, h:32 },
+  ]},
+];
+
+const TABLE_TYPES = ['rect-table','round-table','classroom-desk','student-desk','group-desk'];
+const EMOJI_ITEMS = { monitor:'📺', trash:'🗑️' };
+const GROUP_TYPES = ['group-desk','round-table','rect-table','classroom-desk'];
 const hasChairs = it => TABLE_TYPES.includes(it.type);
-const defByType = t => { for(const g of CATALOG) for(const d of g.items) if(d.type===t) return d; return null; };
+const defByType = t => {
+  for(const cat of [CATALOG, CATALOG_SCHOOL]) for(const g of cat) for(const d of g.items) if(d.type===t) return d;
+  return null;
+};
 
 /* ---------- State ---------- */
 let uid = 0;
 const state = { items:[], selected:new Set(), clipboard:[] };
+let appMode = 'hall';     // 'hall' | 'school'
+let labelMode = 'count';  // 'count' | 'name'
+const history = [];       // undo stack (snapshots)
+function snapshot(){
+  return JSON.stringify(state.items.map(it=>{ const {el, ...rest}=it; return rest; }));
+}
+function pushHistory(){
+  const snap = snapshot();
+  if(history.length && history[history.length-1]===snap) return; // skip no-op
+  history.push(snap);
+  if(history.length>80) history.shift();
+}
+function restoreSnapshot(json){
+  state.items.forEach(it=>{ if(it.el) it.el.remove(); });
+  state.items = []; state.selected.clear();
+  JSON.parse(json).forEach(d=>{ const it={...d}; state.items.push(it); buildEl(it); });
+  updateChrome(); refreshEmpty();
+}
+function undo(){
+  if(!history.length) return;
+  restoreSnapshot(history.pop());
+}
 const canvas = document.getElementById('canvas');
 const emptyState = document.getElementById('emptyState');
 const getItem = id => state.items.find(i=>i.id===id);
@@ -542,6 +760,14 @@ function toCanvasPoint(clientX, clientY){
 }
 function canvasW(){ return canvas.getBoundingClientRect().width / zoom; }
 function canvasH(){ return canvas.getBoundingClientRect().height / zoom; }
+function clampToArea(item){
+  if(item.type==='room' || item.type==='bgimage') return;  // 윤곽/배경은 제한 예외
+  if(item.rot) return;                                     // 회전된 요소는 제외(경계 계산 복잡)
+  const W=canvasW(), H=canvasH();
+  if(!W || !H) return;
+  if(item.w<=W) item.x=Math.max(0, Math.min(item.x, W-item.w));
+  if(item.h<=H) item.y=Math.max(0, Math.min(item.y, H-item.h));
+}
 function computeBase(){
   const cs = getComputedStyle(stageArea);
   const padX = parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
@@ -576,26 +802,35 @@ function setZoom(z, anchor){
 }
 
 /* ---------- Build sidebar ---------- */
-const sidebar = document.getElementById('sidebar');
-CATALOG.forEach(group=>{
-  const t = document.createElement('div'); t.className='group-title'; t.textContent=group.group;
-  sidebar.appendChild(t);
-  const grid = document.createElement('div'); grid.className='palette';
-  group.items.forEach(def=>{
-    const b = document.createElement('div'); b.className='pitem'; b.title=def.name;
-    b.innerHTML = `<span class="ic">${ICON[def.icon]||''}</span><span>${def.name}</span>`;
-    b.addEventListener('click',()=>addFromCatalog(def));
-    grid.appendChild(b);
+const paletteGroups = document.getElementById('paletteGroups');
+function buildSidebar(catalog){
+  paletteGroups.innerHTML = '';
+  catalog.forEach(group=>{
+    const t = document.createElement('div'); t.className='group-title'; t.textContent=group.group;
+    paletteGroups.appendChild(t);
+    const grid = document.createElement('div'); grid.className='palette';
+    group.items.forEach(def=>{
+      const b = document.createElement('div'); b.className='pitem'; b.title=def.name;
+      b.innerHTML = `<span class="ic">${ICON[def.icon]||''}</span><span>${def.name}</span>`;
+      b.addEventListener('click',()=>addFromCatalog(def));
+      grid.appendChild(b);
+    });
+    paletteGroups.appendChild(grid);
   });
-  sidebar.appendChild(grid);
-});
+}
+buildSidebar(CATALOG);
 
 /* ---------- Create / render item ---------- */
 function createItem(def, x, y){
   const item = { id:'i'+(++uid), type:def.type, name:def.name, x, y, w:def.w, h:def.h, rot:0 };
   if(def.seats!==undefined) item.seats = def.seats;
+  if(def.seatSide) item.seatSide = def.seatSide;
   if(def.type==='text'){ item.text = '텍스트'; item.fontSize = 14; }
-  if(def.type==='room'){ item.roomLabel = '가로 12m × 세로 8m'; }
+  if(def.type==='room'){ item.roomLabel = (appMode==='school' ? '교실 크기 / 분반명' : '강의장 크기 / 분반명'); }
+  if(def.type==='student-desk'){ item.studentName = ''; }
+  if(item.type==='group-desk' || item.type==='round-table' || item.type==='rect-table' || item.type==='classroom-desk'){
+    if(!item.groupName){ const n=state.items.filter(i=>GROUP_TYPES.includes(i.type)).length; item.groupName = (n+1)+'모둠'; }
+  }
   state.items.push(item);
   buildEl(item);
   refreshEmpty();
@@ -606,10 +841,14 @@ function positionEl(item){
   const s=item.el.style;
   s.left=item.x+'px'; s.top=item.y+'px'; s.width=item.w+'px'; s.height=item.h+'px';
   s.transform = item.rot ? 'rotate('+item.rot+'deg)' : '';
+  s.opacity = (item.opacity==null ? '' : item.opacity);
   if(textToolbarItem===item) positionTextToolbar(item);
 }
 
 function innerHTML(item){
+  if(item.type==='bgimage'){
+    return `<div class="shape bg-shape"><img src="${item.src||''}" draggable="false" alt=""></div>`;
+  }
   if(hasChairs(item)){
     return `<div class="chairs"></div>`
          + `<div class="shape table-shape"><span class="seat-badge" title="더블클릭하여 인원 수정">${item.seats}</span></div>`;
@@ -619,8 +858,8 @@ function innerHTML(item){
   }
   if(item.type==='room'){
     return `<div class="shape room-shape"></div>`
-         + `<div class="room-tab">강의장</div>`
-         + `<div class="room-size" title="더블클릭하여 크기 입력">${escapeHtml(item.roomLabel||'크기 입력')}</div>`;
+         + `<div class="room-tab">${appMode==='school'?'교실':'강의장'}</div>`
+         + `<div class="room-size" title="더블클릭하여 강의장 크기·분반명 입력">${escapeHtml(item.roomLabel||'크기 입력')}</div>`;
   }
   if(item.type==='chair'){
     return `<div class="shape"></div>`;
@@ -647,18 +886,27 @@ function innerHTML(item){
       +`<circle cx="21" cy="39" r="13" fill="#2b3340"/><circle cx="21" cy="39" r="6.5" fill="#7c8aa3"/>`
       +`<circle cx="21" cy="15" r="5.5" fill="#2b3340"/><circle cx="21" cy="15" r="2.4" fill="#7c8aa3"/></svg></div>`;
   }
+  if(EMOJI_ITEMS[item.type]){
+    return `<div class="shape emoji-shape"><span class="emoji">${EMOJI_ITEMS[item.type]}</span></div>`;
+  }
   return `<div class="shape"><span class="shape-label">${escapeHtml(item.name)}</span></div>`;
 }
 
+function addHandles(el){
+  ['nw','ne','sw','se'].forEach(c=>{
+    const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; el.appendChild(h);
+  });
+  const rh=document.createElement('div'); rh.className='rotate-handle';
+  rh.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3.5V9h-5.5"/></svg>';
+  el.appendChild(rh);
+}
 function buildEl(item){
   const el = document.createElement('div');
   item.el = el;
   el.className = 'item type-'+item.type;
   el.dataset.id = item.id;
   el.innerHTML = innerHTML(item);
-  ['nw','ne','sw','se'].forEach(c=>{
-    const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; el.appendChild(h);
-  });
+  addHandles(el);
   positionEl(item);
   canvas.appendChild(el);
   attachItemHandlers(item);
@@ -667,8 +915,15 @@ function buildEl(item){
 }
 
 /* ---------- Chairs ---------- */
+function chairMetrics(item){
+  const d = defByType(item.type) || {w:item.w, h:item.h};
+  let s = ((item.w/d.w) + (item.h/d.h)) / 2;
+  s = Math.max(0.7, Math.min(2.4, s));
+  const size = Math.round(15*s);
+  return { size, off: size/2 + 5, scale:s };
+}
 function chairPositions(item){
-  const N=item.seats, W=item.w, H=item.h, out=[], off=12.5;
+  const N=item.seats, W=item.w, H=item.h, out=[], off=chairMetrics(item).off;
   if(item.type==='round-table'){
     const r=Math.min(W,H)/2+off, cx=W/2, cy=H/2;
     for(let i=0;i<N;i++){ const a=(i/N)*2*Math.PI - Math.PI/2; out.push({x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)}); }
@@ -690,9 +945,22 @@ function chairPositions(item){
 function refreshTable(item){
   const chairsEl = item.el.querySelector('.chairs');
   const badge = item.el.querySelector('.seat-badge');
-  if(badge) badge.textContent = item.seats;
+  if(badge){
+    if(item.type==='student-desk' || item.seats===1){
+      badge.classList.add('name-badge');
+      badge.classList.toggle('empty', !item.studentName);
+      badge.textContent = item.studentName || '';
+    } else if(labelMode==='name'){
+      badge.classList.add('name-badge'); badge.classList.remove('empty');
+      badge.textContent = item.groupName || '모둠';
+    } else {
+      badge.classList.remove('name-badge','empty');
+      badge.textContent = item.seats;
+    }
+  }
+  const cm = chairMetrics(item);
   chairsEl.innerHTML = chairPositions(item)
-    .map(p=>`<div class="chair" style="left:${p.x}px;top:${p.y}px"></div>`).join('');
+    .map(p=>`<div class="chair" style="left:${p.x}px;top:${p.y}px;width:${cm.size}px;height:${cm.size}px"></div>`).join('');
 }
 
 /* ---------- Auto font scaling (label/badge fit within element) ---------- */
@@ -708,10 +976,17 @@ function fitLabel(item){
 function fitBadge(item){
   const badge = item.el.querySelector('.seat-badge');
   if(!badge) return;
-  const fs = Math.max(11, Math.min(22, Math.min(item.w, item.h)*0.17));
-  badge.style.fontSize = fs + 'px';
+  const sc = chairMetrics(item).scale;
+  if(badge.classList.contains('name-badge')){
+    const len = Math.max([...(badge.textContent||'빈자리')].length, 2);
+    let fs = Math.min((item.h-8)*0.45, (item.w-8)/(len*0.62), 15*sc);
+    badge.style.fontSize = Math.max(8, Math.min(fs, 24)) + 'px';
+  } else {
+    badge.style.fontSize = Math.max(11, Math.min(34, 13*sc)) + 'px';
+  }
 }
-function fitContent(item){ fitLabel(item); if(hasChairs(item)) fitBadge(item); }
+function fitEmoji(item){ const e=item.el.querySelector('.emoji'); if(e) e.style.fontSize = Math.min(item.w,item.h)*0.88 + 'px'; }
+function fitContent(item){ fitLabel(item); fitEmoji(item); if(hasChairs(item)) fitBadge(item); }
 
 /* ---------- Selection ---------- */
 function clearSelection(){
@@ -726,6 +1001,30 @@ function toggleSelection(item){
   updateChrome();
 }
 function selectAll(){ clearSelection(); state.items.forEach(it=>{ state.selected.add(it.id); it.el.classList.add('selected'); }); updateChrome(); }
+
+/* ---------- Grouping ---------- */
+function groupOf(item){ return item.groupId ? state.items.filter(i=>i.groupId===item.groupId) : [item]; }
+function selectG(item){ clearSelection(); groupOf(item).forEach(addToSelection); }
+function toggleSelectionG(item){
+  const members=groupOf(item);
+  const allSel=members.every(m=>state.selected.has(m.id));
+  if(allSel) members.forEach(m=>{ state.selected.delete(m.id); m.el.classList.remove('selected'); });
+  else members.forEach(m=>{ state.selected.add(m.id); m.el.classList.add('selected'); });
+  updateChrome();
+}
+function groupSelected(){
+  const ids=[...state.selected];
+  if(ids.length<2) return;
+  pushHistory();
+  const gid='g'+(++uid);
+  ids.forEach(id=>{ const it=getItem(id); if(it) it.groupId=gid; });
+}
+function ungroupSelected(){
+  pushHistory();
+  [...state.selected].forEach(id=>{ const it=getItem(id); if(it) delete it.groupId; });
+}
+function selectionHasGroup(){ return [...state.selected].some(id=>{ const it=getItem(id); return it && it.groupId; }); }
+
 function updateChrome(){
   state.items.forEach(it=> it.el.classList.remove('solo'));
   if(state.selected.size===1){
@@ -733,6 +1032,9 @@ function updateChrome(){
     if(it) it.el.classList.add('solo');
     if(it && it.type==='text') showTextToolbar(it); else hideTextToolbar();
   } else hideTextToolbar();
+  const ab=document.getElementById('alignBar');
+  if(ab) ab.classList.toggle('show', state.selected.size>=2);
+  if(gapCheckOn) renderGapCheck();
 }
 
 /* ---------- Text memo: auto-fit + font size toolbar ---------- */
@@ -785,12 +1087,12 @@ function attachItemHandlers(item){
   const el = item.el;
   el.addEventListener('mousedown', e=>{
     if(e.button!==0) return;
-    if(e.target.classList.contains('handle')) return;
+    if(e.target.classList.contains('handle')||e.target.classList.contains('rotate-handle')) return;
     if(e.target.classList.contains('seat-input')) return;
     if(e.target.isContentEditable) return;
     e.stopPropagation();
-    if(e.ctrlKey||e.metaKey){ toggleSelection(item); return; }
-    if(!state.selected.has(item.id)) selectOnly(item);
+    if(e.ctrlKey||e.metaKey){ toggleSelectionG(item); return; }
+    if(!state.selected.has(item.id)) selectG(item);
     startMove(e);
   });
 
@@ -802,6 +1104,12 @@ function attachItemHandlers(item){
       if(e.ctrlKey||e.metaKey) startRotate(item, e);
       else startResize(item, h.dataset.corner, e);
     });
+  });
+  const rotH = el.querySelector('.rotate-handle');
+  if(rotH) rotH.addEventListener('mousedown', e=>{
+    e.stopPropagation(); e.preventDefault();
+    if(!state.selected.has(item.id)) selectOnly(item);
+    startRotate(item, e);
   });
 
   if(hasChairs(item)){
@@ -827,6 +1135,7 @@ function attachItemHandlers(item){
     const sizeEl = el.querySelector('.room-size');
     sizeEl.addEventListener('dblclick', e=>{
       e.stopPropagation();
+      pushHistory();
       sizeEl.contentEditable='true'; sizeEl.focus();
       const r=document.createRange(); r.selectNodeContents(sizeEl);
       const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
@@ -837,31 +1146,49 @@ function attachItemHandlers(item){
   }
 }
 
+function bboxOf(items){
+  const l=Math.min(...items.map(i=>i.x)), r=Math.max(...items.map(i=>i.x+i.w));
+  const t=Math.min(...items.map(i=>i.y)), b=Math.max(...items.map(i=>i.y+i.h));
+  return {l,r,t,b,cx:(l+r)/2,cy:(t+b)/2};
+}
+function otherGroupBBoxes(movingIds){
+  const map={};
+  state.items.forEach(it=>{ if(it.groupId && !movingIds.has(it.id) && it.type!=='bgimage'){ (map[it.groupId]=map[it.groupId]||[]).push(it); } });
+  return Object.values(map).map(arr=>bboxOf(arr));
+}
 function startMove(e){
+  pushHistory();
   const p0=toCanvasPoint(e.clientX, e.clientY);
   const moving=[...state.selected].map(id=>{ const it=getItem(id); return {it, ox:it.x, oy:it.y}; });
-  const single = moving.length===1 ? moving[0].it : null;
-  // alignment targets (centers): canvas center + every other item's center
-  const targetsX=[], targetsY=[];
-  if(single){
-    targetsX.push(canvasW()/2); targetsY.push(canvasH()/2);
-    state.items.forEach(it=>{ if(it.id!==single.id){ targetsX.push(it.x+it.w/2); targetsY.push(it.y+it.h/2); } });
-  }
+  const movingIds=new Set(moving.map(m=>m.it.id));
+  const W=canvasW(), H=canvasH();
+  // 정렬 기준선: 캔버스 중심/가장자리 + 다른 요소들의 좌/중/우·상/중/하 + 다른 그룹의 박스
+  const vT=[W/2,0,W], hT=[H/2,0,H];
+  state.items.forEach(it=>{
+    if(movingIds.has(it.id) || it.type==='bgimage') return;
+    vT.push(it.x, it.x+it.w/2, it.x+it.w);
+    hT.push(it.y, it.y+it.h/2, it.y+it.h);
+  });
+  otherGroupBBoxes(movingIds).forEach(b=>{ vT.push(b.l,b.cx,b.r); hT.push(b.t,b.cy,b.b); });
   const SNAP=6;
   function mm(ev){
     const p=toCanvasPoint(ev.clientX, ev.clientY);
     const dx=p.x-p0.x, dy=p.y-p0.y;
     moving.forEach(m=>{ m.it.x=Math.round(m.ox+dx); m.it.y=Math.round(m.oy+dy); });
-    if(single){
-      let cx=single.x+single.w/2, cy=single.y+single.h/2, gx=null, gy=null, bx=SNAP+1, by=SNAP+1;
-      targetsX.forEach(t=>{ const d=Math.abs(cx-t); if(d<=SNAP && d<bx){ bx=d; gx=t; } });
-      targetsY.forEach(t=>{ const d=Math.abs(cy-t); if(d<=SNAP && d<by){ by=d; gy=t; } });
-      if(gx!==null){ single.x=Math.round(gx-single.w/2); showGuideV(gx); } else hideGuideV();
-      if(gy!==null){ single.y=Math.round(gy-single.h/2); showGuideH(gy); } else hideGuideH();
-    }
+    const items=moving.map(m=>m.it);
+    const mb=bboxOf(items);
+    const vRefs=[mb.l, mb.cx, mb.r], hRefs=[mb.t, mb.cy, mb.b];
+    let bV=null, bvd=SNAP+1;
+    vRefs.forEach(ref=> vT.forEach(t=>{ const d=Math.abs(ref-t); if(d<=SNAP && d<bvd){ bvd=d; bV={off:t-ref, line:t}; } }));
+    let bH=null, bhd=SNAP+1;
+    hRefs.forEach(ref=> hT.forEach(t=>{ const d=Math.abs(ref-t); if(d<=SNAP && d<bhd){ bhd=d; bH={off:t-ref, line:t}; } }));
+    if(bV){ moving.forEach(m=> m.it.x+=Math.round(bV.off)); showGuideV(bV.line); } else hideGuideV();
+    if(bH){ moving.forEach(m=> m.it.y+=Math.round(bH.off)); showGuideH(bH.line); } else hideGuideH();
+    moving.forEach(m=> clampToArea(m.it));
     moving.forEach(m=> positionEl(m.it));
+    if(gapCheckOn) renderGapCheck();
   }
-  function mu(){ hideGuides(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }
+  function mu(){ hideGuides(); if(gapCheckOn) renderGapCheck(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }
   document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
 }
 
@@ -879,9 +1206,50 @@ function hideGuideV(){ if(guideV) guideV.style.display='none'; }
 function hideGuideH(){ if(guideH) guideH.style.display='none'; }
 function hideGuides(){ hideGuideV(); hideGuideH(); }
 
+/* ---------- Gap check (요소 간 간격 일치 확인) ---------- */
+let gapCheckOn=false, gapLayer=null;
+function ensureGapLayer(){ if(!gapLayer){ gapLayer=document.createElement('div'); gapLayer.id='gapLayer'; canvas.appendChild(gapLayer); } }
+function renderGapCheck(){
+  ensureGapLayer();
+  gapLayer.innerHTML='';
+  if(!gapCheckOn) return;
+  const items=[...state.selected].map(getItem).filter(Boolean).filter(i=>i.type!=='bgimage');
+  if(items.length<2) return;
+  const xs=items.map(i=>i.x+i.w/2), ys=items.map(i=>i.y+i.h/2);
+  const horiz=(Math.max(...xs)-Math.min(...xs)) >= (Math.max(...ys)-Math.min(...ys));
+  const sorted=[...items].sort((a,b)=> horiz ? (a.x-b.x) : (a.y-b.y));
+  const gaps=[];
+  for(let k=1;k<sorted.length;k++){ const a=sorted[k-1], b=sorted[k];
+    gaps.push(horiz ? (b.x-(a.x+a.w)) : (b.y-(a.y+a.h))); }
+  const eq = gaps.length>=2 && gaps.every(g=> Math.abs(g-gaps[0])<=1);
+  for(let k=1;k<sorted.length;k++){
+    const a=sorted[k-1], b=sorted[k], g=gaps[k-1];
+    const seg=document.createElement('div'); seg.className='gap-seg'+(eq?' eq':'');
+    if(horiz){
+      const x1=a.x+a.w, x2=b.x;
+      const yy=(Math.max(a.y,b.y)+Math.min(a.y+a.h,b.y+b.h))/2;
+      const line=document.createElement('div'); line.className='gap-line';
+      line.style.left=x1+'px'; line.style.top=yy+'px'; line.style.width=Math.max(0,x2-x1)+'px';
+      const lab=document.createElement('div'); lab.className='gap-label';
+      lab.style.left=((x1+x2)/2)+'px'; lab.style.top=yy+'px'; lab.textContent=Math.round(g);
+      seg.appendChild(line); seg.appendChild(lab);
+    } else {
+      const y1=a.y+a.h, y2=b.y;
+      const xx=(Math.max(a.x,b.x)+Math.min(a.x+a.w,b.x+b.w))/2;
+      const line=document.createElement('div'); line.className='gap-line vert';
+      line.style.left=xx+'px'; line.style.top=y1+'px'; line.style.height=Math.max(0,y2-y1)+'px';
+      const lab=document.createElement('div'); lab.className='gap-label';
+      lab.style.left=xx+'px'; lab.style.top=((y1+y2)/2)+'px'; lab.textContent=Math.round(g);
+      seg.appendChild(line); seg.appendChild(lab);
+    }
+    gapLayer.appendChild(seg);
+  }
+}
+
 const CORNER_SIGN = { nw:[-1,-1], ne:[1,-1], sw:[-1,1], se:[1,1] };
 
 function startResize(item, corner, e){
+  pushHistory();
   const cr = canvas.getBoundingClientRect();
   const rot = (item.rot||0)*Math.PI/180, cos=Math.cos(rot), sin=Math.sin(rot);
   const [scx,scy] = CORNER_SIGN[corner];
@@ -891,6 +1259,8 @@ function startResize(item, corner, e){
   const lax=-scx*w0/2, lay=-scy*h0/2;
   const Ax=C0x+(cos*lax-sin*lay), Ay=C0y+(sin*lax+cos*lay);
   const keepSquare = item.type==='round-table';
+  const keepAspect = item.type==='bgimage';
+  const aspect = h0>0 ? w0/h0 : 1;
   const minW=20, minH=16;
   function mm(ev){
     const M=toCanvasPoint(ev.clientX, ev.clientY);
@@ -899,10 +1269,12 @@ function startResize(item, corner, e){
     const ly=-sin*vx+cos*vy;
     let newW=Math.max(minW, lx*scx), newH=Math.max(minH, ly*scy);
     if(keepSquare){ const s=Math.max(newW,newH); newW=s; newH=s; }
+    else if(keepAspect){ newH=newW/aspect; if(newH<minH){ newH=minH; newW=newH*aspect; } }
     const gx=scx*newW/2, gy=scy*newH/2;          // grabbed corner offset from new center, local
     const Cx=Ax+(cos*gx-sin*gy), Cy=Ay+(sin*gx+cos*gy);
     item.w=Math.round(newW); item.h=Math.round(newH);
     item.x=Math.round(Cx-newW/2); item.y=Math.round(Cy-newH/2);
+    clampToArea(item);
     positionEl(item);
     if(hasChairs(item)) refreshTable(item);
     fitContent(item);
@@ -912,6 +1284,7 @@ function startResize(item, corner, e){
 }
 
 function startRotate(item, e){
+  pushHistory();
   const Cx=item.x+item.w/2, Cy=item.y+item.h/2;  // center is rotation-invariant
   const sp=toCanvasPoint(e.clientX, e.clientY);
   const start=Math.atan2(sp.y-Cy, sp.x-Cx);
@@ -943,15 +1316,31 @@ function hideAngle(){ if(angleTag) angleTag.style.display='none'; }
 
 /* ---------- Seat editing ---------- */
 function editSeats(item){
+  pushHistory();
   const badge = item.el.querySelector('.seat-badge');
+  // 텍스트 편집: 학생 책상(이름) 또는 모둠명 표시 모드
+  const isName = (item.type==='student-desk' || item.seats===1) || (labelMode==='name');
   const input = document.createElement('input');
-  input.type='number'; input.min='1'; input.max='40'; input.value=item.seats; input.className='seat-input';
+  input.className='seat-input';
+  if(isName){
+    input.type='text'; input.style.width='80px'; input.maxLength=16;
+    input.value = (item.type==='student-desk'||item.seats===1) ? (item.studentName||'') : (item.groupName||'');
+    input.placeholder = (item.type==='student-desk'||item.seats===1) ? '이름' : '모둠명';
+  } else {
+    input.type='number'; input.min='1'; input.max='40'; input.value=item.seats;
+  }
   badge.replaceWith(input); input.focus(); input.select();
   let done=false;
   const commit = ()=>{
     if(done) return; done=true;
-    let v=parseInt(input.value,10); if(isNaN(v)) v=item.seats;
-    item.seats=Math.max(1,Math.min(40,v));
+    if(isName){
+      const v=input.value.trim();
+      if(item.type==='student-desk'||item.seats===1) item.studentName=v;
+      else item.groupName = v || '모둠';
+    } else {
+      let v=parseInt(input.value,10); if(isNaN(v)) v=item.seats;
+      item.seats=Math.max(1,Math.min(40,v));
+    }
     rebuild(item);
   };
   input.addEventListener('blur', commit);
@@ -965,6 +1354,7 @@ function rebuild(item){
   const wasSelected = state.selected.has(item.id);
   item.el.innerHTML = innerHTML(item);
   ['nw','ne','sw','se'].forEach(c=>{ const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; item.el.appendChild(h); });
+  { const rh=document.createElement('div'); rh.className='rotate-handle'; rh.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3.5V9h-5.5"/></svg>'; item.el.appendChild(rh); }
   attachItemHandlers(item);
   if(hasChairs(item)) refreshTable(item);
   fitContent(item);
@@ -973,6 +1363,7 @@ function rebuild(item){
 
 /* ---------- Add from catalog ---------- */
 function addFromCatalog(def){
+  pushHistory();
   const W = canvasW() > 60 ? canvasW() : 800;
   const H = canvasH() > 60 ? canvasH() : 500;
   const n = state.items.length % 8;
@@ -989,13 +1380,15 @@ function addFromCatalog(def){
 /* ---------- Clipboard / delete ---------- */
 function copySel(){
   state.clipboard = [...state.selected].map(id=>{
-    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide}=getItem(id);
-    return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide};
+    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId}=getItem(id);
+    return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId};
   });
 }
 function pasteSel(){
   if(!state.clipboard.length) return;
+  pushHistory();
   clearSelection();
+  const gidMap={};
   state.clipboard.forEach(d=>{
     const item = { id:'i'+(++uid), type:d.type, name:d.name, x:d.x+24, y:d.y+24, w:d.w, h:d.h, rot:d.rot||0 };
     if(d.seats!==undefined) item.seats=d.seats;
@@ -1003,24 +1396,30 @@ function pasteSel(){
     if(d.fontSize!==undefined) item.fontSize=d.fontSize;
     if(d.roomLabel!==undefined) item.roomLabel=d.roomLabel;
     if(d.seatSide!==undefined) item.seatSide=d.seatSide;
+    if(d.studentName!==undefined) item.studentName=d.studentName;
+    if(d.groupName!==undefined) item.groupName=d.groupName;
+    if(d.groupId){ if(!gidMap[d.groupId]) gidMap[d.groupId]='g'+(++uid); item.groupId=gidMap[d.groupId]; }
+    if(d.src!==undefined) item.src=d.src;
     state.items.push(item); buildEl(item); addToSelection(item);
   });
-  // cascade subsequent pastes
   state.clipboard = state.clipboard.map(d=>({...d, x:d.x+24, y:d.y+24}));
   refreshEmpty();
 }
 function deleteSel(){
+  pushHistory();
   [...state.selected].forEach(id=>{ const it=getItem(id); if(it){ it.el.remove(); } });
   state.items = state.items.filter(it=>!state.selected.has(it.id));
   state.selected.clear(); updateChrome(); refreshEmpty();
 }
 function clearAll(){
   if(state.items.length && !confirm('도면의 모든 항목을 지울까요?')) return;
+  pushHistory();
   state.items.forEach(it=>it.el.remove());
   state.items=[]; state.selected.clear(); updateChrome(); refreshEmpty();
 }
 function nudge(key, step){
   if(!state.selected.size) return;
+  pushHistory();
   const dx = key==='ArrowLeft'?-step:key==='ArrowRight'?step:0;
   const dy = key==='ArrowUp'?-step:key==='ArrowDown'?step:0;
   state.selected.forEach(id=>{ const it=getItem(id); it.x+=dx; it.y+=dy; positionEl(it); });
@@ -1058,7 +1457,8 @@ document.addEventListener('keydown', e=>{
   const typing = ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable);
   if(typing){ if(e.key==='Escape') ae.blur(); return; }
   const mod = e.ctrlKey||e.metaKey;
-  if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); deleteSel(); }
+  if(mod && e.key.toLowerCase()==='z' && !e.shiftKey){ e.preventDefault(); undo(); }
+  else if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); deleteSel(); }
   else if(mod && e.key.toLowerCase()==='c'){ e.preventDefault(); copySel(); }
   else if(mod && e.key.toLowerCase()==='v'){ e.preventDefault(); pasteSel(); }
   else if(mod && e.key.toLowerCase()==='a'){ e.preventDefault(); selectAll(); }
@@ -1073,7 +1473,7 @@ function refreshEmpty(){ emptyState.style.display = state.items.length ? 'none' 
 /* ---------- Venue title ---------- */
 const venueInput=document.getElementById('venue');
 const sheetTitle=document.getElementById('sheetTitle');
-venueInput.addEventListener('input', ()=>{ sheetTitle.textContent = venueInput.value.trim() || '강의장 배치도'; });
+venueInput.addEventListener('input', ()=>{ sheetTitle.textContent = venueInput.value.trim() || (appMode==='school'?'교실 배치도':'강의장 배치도'); });
 
 /* ---------- Toolbar buttons ---------- */
 document.getElementById('btnCopy').addEventListener('click', copySel);
@@ -1150,15 +1550,15 @@ function groupTemplate(arrange, tableType, perGroup){
   const longType = tableType==='round-table' ? 'rect-table' : tableType;
   if(arrange==='parallel'){
     // 11자형 (이미지2): 세로 테이블 2개, 의자는 바깥쪽(왼/오)에만
-    const tw=60, th=Math.max(116, 46+perGroup*9), midgap=18;
+    const tw=60, th=Math.max(116, 46+perGroup*9), midgap=5;
     const left=Math.ceil(perGroup/2), right=perGroup-left;
     parts.push({type:longType, dx:CM,            dy:0, w:tw, h:th, seats:Math.max(1,left),  seatSide:'left'});
     parts.push({type:longType, dx:CM+tw+midgap,  dy:0, w:tw, h:th, seats:Math.max(1,right), seatSide:'right'});
     return {parts, gw:CM*2+tw*2+midgap, gh:th};
   }
   // T자형 (이미지1): 세로 테이블 2개(상단, 의자 바깥쪽) + 가로 테이블 1개(하단, 의자 아래)
-  const tw=60, th=Math.max(104, 40+perGroup*7), midgap=16;
-  const bottomH=46, vGap=22;
+  const tw=60, th=Math.max(104, 40+perGroup*7), midgap=5;
+  const bottomH=46, vGap=8;
   const bottomSeats=Math.max(1, Math.round(perGroup/3));
   const rem=Math.max(0, perGroup-bottomSeats);
   const leftSeats=Math.max(1, Math.ceil(rem/2)), rightSeats=Math.max(1, rem-Math.ceil(rem/2));
@@ -1178,8 +1578,9 @@ function autoArrange(){
 
   if(state.items.some(i=>i.type!=='room') &&
      !confirm('자동 배치를 생성하면 기존 항목(강의장 윤곽 제외)이 정리됩니다. 진행할까요?')) return;
-  [...state.items].forEach(it=>{ if(it.type!=='room') it.el.remove(); });
-  state.items=state.items.filter(it=>it.type==='room');
+  pushHistory();
+  [...state.items].forEach(it=>{ if(it.type!=='room' && it.type!=='bgimage') it.el.remove(); });
+  state.items=state.items.filter(it=>it.type==='room' || it.type==='bgimage');
   state.selected.clear(); updateChrome();
 
   const tpl=groupTemplate(arrange, tableType, perGroup);
@@ -1194,8 +1595,10 @@ function autoArrange(){
   let cols=Math.max(1, Math.floor((area.w+gapMin)/(gw+gapMin)));
   cols=Math.min(cols, groups);
   const rows=Math.ceil(groups/cols);
-  const gapX = cols>1 ? Math.max(gapMin,(area.w-cols*gw)/(cols-1)) : 0;
-  const gapY = rows>1 ? Math.max(gapMin,(area.h-rows*gh)/(rows-1)) : 0;
+  const gxIn=Math.max(0, parseInt(document.getElementById('apGapX').value,10)||0);
+  const gyIn=Math.max(0, parseInt(document.getElementById('apGapY').value,10)||0);
+  const gapX = gxIn>0 ? gxIn : (cols>1 ? Math.max(gapMin,(area.w-cols*gw)/(cols-1)) : 0);
+  const gapY = gyIn>0 ? gyIn : (rows>1 ? Math.max(gapMin,(area.h-rows*gh)/(rows-1)) : 0);
   const totalW = cols*gw+(cols-1)*gapX;
   const totalH = rows*gh+(rows-1)*gapY;
   const startX = area.x + Math.max(0,(area.w-totalW)/2);
@@ -1222,6 +1625,195 @@ function autoArrange(){
   clearSelection();
 }
 document.getElementById('apGo').addEventListener('click', autoArrange);
+
+/* ---------- Mode toggle (강의장/학교) ---------- */
+const frontBand = document.getElementById('frontBand');
+const btnSchool = document.getElementById('btnSchool');
+const SCHOOL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4L2 9l10 5 10-5-10-5z"/><path d="M6 11v4c0 1 3 2 6 2s6-1 6-2v-4"/></svg>';
+function setMode(mode){
+  appMode = mode;
+  const school = mode==='school';
+  document.body.classList.toggle('school-mode', school);
+  btnSchool.classList.toggle('on', school);
+  btnSchool.innerHTML = SCHOOL_ICON + (school ? '강의장버전' : '학교버전');
+  buildSidebar(school ? CATALOG_SCHOOL : CATALOG);
+  frontBand.innerHTML = school ? '▲&nbsp;&nbsp;전 면&nbsp;&nbsp;( 교실 앞 · 칠판 )&nbsp;&nbsp;▲'
+                               : '▲&nbsp;&nbsp;전 면&nbsp;&nbsp;( FRONT )&nbsp;&nbsp;▲';
+  if(!venueInput.value.trim()) sheetTitle.textContent = school ? '교실 배치도' : '강의장 배치도';
+}
+btnSchool.addEventListener('click', ()=> setMode(appMode==='hall'?'school':'hall'));
+
+/* ---------- Label toggle (인원/모둠명) ---------- */
+const btnLabel = document.getElementById('btnLabel');
+btnLabel.addEventListener('click', ()=>{
+  labelMode = labelMode==='count' ? 'name' : 'count';
+  btnLabel.classList.toggle('on', labelMode==='name');
+  state.items.forEach(it=>{ if(hasChairs(it)){ refreshTable(it); fitContent(it); } });
+});
+
+/* ---------- School auto layout (행×열 군집) ---------- */
+function autoArrangeSchool(){
+  const rows=Math.max(1, parseInt(document.getElementById('sRows').value,10)||5);
+  const cols=Math.max(1, parseInt(document.getElementById('sCols').value,10)||6);
+  const deskType=document.getElementById('sDeskType').value;
+  const perTable=Math.max(1, parseInt(document.getElementById('sPerTable').value,10)||1);
+  if(state.items.some(i=>i.type!=='room') &&
+     !confirm('자동 배치를 생성하면 기존 항목(교실 윤곽 제외)이 정리됩니다. 진행할까요?')) return;
+  pushHistory();
+  [...state.items].forEach(it=>{ if(it.type!=='room' && it.type!=='bgimage') it.el.remove(); });
+  state.items=state.items.filter(it=>it.type==='room' || it.type==='bgimage');
+  state.selected.clear(); updateChrome();
+
+  const CM=20;
+  let tw, th, type, seatSide=null;
+  if(deskType==='single'){ type='student-desk'; tw=Math.max(62, 40+perTable*24); th=42; seatSide='bottom'; }
+  else { type='group-desk'; tw=Math.max(96, 56+perTable*10); th=72; }
+
+  const room=state.items.find(i=>i.type==='room');
+  const cw=canvasW(), ch=canvasH();
+  const area = room ? {x:room.x+16, y:room.y+40, w:Math.max(tw,room.w-32), h:Math.max(th,room.h-56)}
+                    : {x:30, y:42, w:Math.max(tw,(cw||900)-60), h:Math.max(th,(ch||560)-72)};
+
+  // 수동 간격 (가로/세로) — 의자가 들어갈 최소 간격 보장
+  const minGX = deskType==='single' ? 6  : 30;
+  const minGY = deskType==='single' ? 28 : 30;
+  const gapX = Math.max(minGX, parseInt(document.getElementById('sGapX').value,10)||0);
+  const gapY = Math.max(minGY, parseInt(document.getElementById('sGapY').value,10)||0);
+  const totalW=cols*tw+(cols-1)*gapX, totalH=rows*th+(rows-1)*gapY;
+  const startX=area.x+Math.max(0,(area.w-totalW)/2), startY=area.y+Math.max(0,(area.h-totalH)/2);
+
+  const def=defByType(type);
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const ox=Math.round(startX+c*(tw+gapX));
+    const oy=Math.round(startY+r*(th+gapY));
+    const it=createItem(def, ox, oy);
+    it.w=tw; it.h=th; it.seats=perTable;
+    if(seatSide) it.seatSide=seatSide; else delete it.seatSide;
+    positionEl(it); refreshTable(it); fitContent(it);
+  }
+  clearSelection();
+}
+document.getElementById('sGo').addEventListener('click', autoArrangeSchool);
+
+/* ---------- Roster: 랜덤 자리배정 (명단/엑셀) ---------- */
+function parseRoster(){
+  return document.getElementById('rosterNames').value.split(/[\n\r\t,]+/).map(s=>s.trim()).filter(Boolean);
+}
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function singleDesks(){
+  return state.items.filter(it=> it.type==='student-desk' || (hasChairs(it)&&it.seats===1))
+    .sort((a,b)=> (a.y-b.y) || (a.x-b.x));
+}
+document.getElementById('rosterAssign').addEventListener('click', ()=>{
+  const names=shuffleArr(parseRoster());
+  if(!names.length){ alert('명단을 먼저 입력해 주세요. (한 줄에 한 명 · 엑셀 붙여넣기 가능)'); return; }
+  const desks=singleDesks();
+  if(!desks.length){ alert('배정할 1인 책상이 없습니다. 먼저 자동배치(개인 책상)로 자리를 만들어 주세요.'); return; }
+  pushHistory();
+  desks.forEach((d,i)=>{ d.studentName=names[i]||''; rebuild(d); });
+  if(names.length>desks.length) alert('자리('+desks.length+'석)보다 인원('+names.length+'명)이 많아 '+(names.length-desks.length)+'명은 배정되지 않았습니다.');
+});
+document.getElementById('rosterClear').addEventListener('click', ()=>{
+  pushHistory();
+  singleDesks().forEach(d=>{ d.studentName=''; rebuild(d); });
+});
+
+/* ---------- Multi-select alignment ---------- */
+function alignSelected(type){
+  const items=[...state.selected].map(getItem).filter(Boolean);
+  if(items.length<2) return;
+  pushHistory();
+  const minX=Math.min(...items.map(i=>i.x));
+  const maxR=Math.max(...items.map(i=>i.x+i.w));
+  const minY=Math.min(...items.map(i=>i.y));
+  const maxB=Math.max(...items.map(i=>i.y+i.h));
+  const cX=(minX+maxR)/2, cY=(minY+maxB)/2;
+  const GAP=10;
+  const horiz = (type==='left'||type==='right'||type==='hcenter');
+  items.forEach(i=>{
+    if(type==='left')         i.x=Math.round(minX);
+    else if(type==='right')   i.x=Math.round(maxR-i.w);
+    else if(type==='hcenter') i.x=Math.round(cX-i.w/2);
+    else if(type==='top')     i.y=Math.round(minY);
+    else if(type==='bottom')  i.y=Math.round(maxB-i.h);
+    else if(type==='vcenter') i.y=Math.round(cY-i.h/2);
+  });
+  // 겹침 방지: 정렬한 축과 직각 방향으로 순서를 지키며 최소 간격 확보
+  if(horiz){
+    const sorted=[...items].sort((a,b)=> (a.y+a.h/2)-(b.y+b.h/2));
+    for(let k=1;k<sorted.length;k++){
+      const prev=sorted[k-1], cur=sorted[k];
+      const minTop=prev.y+prev.h+GAP;
+      if(cur.y<minTop) cur.y=Math.round(minTop);
+    }
+  } else {
+    const sorted=[...items].sort((a,b)=> (a.x+a.w/2)-(b.x+b.w/2));
+    for(let k=1;k<sorted.length;k++){
+      const prev=sorted[k-1], cur=sorted[k];
+      const minLeft=prev.x+prev.w+GAP;
+      if(cur.x<minLeft) cur.x=Math.round(minLeft);
+    }
+  }
+  items.forEach(i=> positionEl(i));
+}
+document.querySelectorAll('#alignBar button[data-al]').forEach(b=>{
+  b.addEventListener('click', ()=> alignSelected(b.dataset.al));
+});
+document.getElementById('btnGroup').addEventListener('click', ()=>{ groupSelected(); });
+document.getElementById('btnUngroup').addEventListener('click', ()=>{ ungroupSelected(); });
+document.getElementById('btnGapCheck').addEventListener('click', ()=>{
+  gapCheckOn=!gapCheckOn;
+  document.getElementById('btnGapCheck').classList.toggle('on', gapCheckOn);
+  renderGapCheck();
+});
+
+/* ---------- Background image (movable / resizable element) ---------- */
+const bgFile = document.getElementById('bgFile');
+document.getElementById('bgPick').addEventListener('click', ()=> bgFile.click());
+bgFile.addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  pushHistory();
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    const probe = new Image();
+    probe.onload  = ()=> addBgImage(rd.result, probe.naturalWidth||400, probe.naturalHeight||300);
+    probe.onerror = ()=> addBgImage(rd.result, 480, 320);
+    probe.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+  bgFile.value='';
+});
+document.getElementById('bgClear').addEventListener('click', ()=>{ pushHistory(); removeBgImage(); });
+
+function addBgImage(src, nw, nh){
+  removeBgImage();
+  const W = canvasW()||900, H = canvasH()||560;
+  let w=nw, h=nh;
+  const s = Math.min((W*0.85)/w, (H*0.85)/h, 1);
+  w=Math.round(w*s); h=Math.round(h*s);
+  const op = (+document.getElementById('bgOpacity').value)/100;
+  const item = { id:'i'+(++uid), type:'bgimage', name:'배경 이미지',
+                 x:Math.round((W-w)/2), y:Math.round((H-h)/2), w, h, rot:0, src, opacity:op };
+  state.items.push(item);
+  buildEl(item);
+  refreshEmpty();
+}
+function removeBgImage(){
+  state.items.filter(i=>i.type==='bgimage').forEach(i=>{ i.el.remove(); state.selected.delete(i.id); });
+  state.items = state.items.filter(i=>i.type!=='bgimage');
+  updateChrome(); refreshEmpty();
+}
+document.getElementById('bgOpacity').addEventListener('input', e=>{
+  const v=(+e.target.value)/100;
+  state.items.filter(i=>i.type==='bgimage').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
+});
+document.getElementById('roomOpacity').addEventListener('input', e=>{
+  const v=(+e.target.value)/100;
+  state.items.filter(i=>i.type==='room').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
+});
+
+
 
 /* ---------- Zoom controls ---------- */
 function zoomCenterAnchor(){ const r=stageArea.getBoundingClientRect(); return {x:r.width/2, y:r.height/2}; }
@@ -1266,7 +1858,7 @@ async function exportPNG(){
       outCanvas = await html2canvas(document.getElementById('capture'), { backgroundColor:bg, scale, useCORS:true });
     }
     const a=document.createElement('a');
-    a.download = venue + '_강의장 배치도_' + ymd6() + '.png';
+    a.download = venue + (appMode==='school'?'_교실 배치도_':'_강의장 배치도_') + ymd6() + '.png';
     a.href=outCanvas.toDataURL('image/png'); a.click();
   }catch(err){ alert('이미지 저장 중 문제가 발생했습니다.'); console.error(err); }
   finally{ document.body.classList.remove('capturing'); if(prevZoom!==1){ zoom=prevZoom; applyZoom(); } }
