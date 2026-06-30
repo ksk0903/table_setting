@@ -275,10 +275,16 @@
   /* ===== Room outline (강의장 윤곽) ===== */
   .item.type-room{z-index:1;pointer-events:none;}
   .item.type-room.selected{z-index:3;}
-  .item.type-room .handle,.item.type-room .rotate-handle,.item.type-room .room-tab,.item.type-room .room-size{pointer-events:auto;}
+  .item.type-room .handle,.item.type-room .rotate-handle,.item.type-room .room-tab,.item.type-room .room-size,.item.type-room .room-edge{pointer-events:auto;}
   .room-shape{position:absolute;inset:0;background:transparent;border:2px solid #5b6675;border-radius:4px;}
   .item.type-room.selected .room-shape{border-color:var(--select);}
   .item.type-room::before{border-color:#9aa6b6;}
+  /* 테두리(윤곽선)를 클릭하면 선택·이동되도록 하는 가장자리 히트 영역 (안쪽은 통과) */
+  .room-edge{position:absolute;pointer-events:auto;cursor:move;z-index:2;}
+  .re-t{top:0;left:0;right:0;height:11px;}
+  .re-b{bottom:0;left:0;right:0;height:11px;}
+  .re-l{top:0;bottom:0;left:0;width:11px;}
+  .re-r{top:0;bottom:0;right:0;width:11px;}
   .room-tab{position:absolute;top:-23px;left:0;background:#5b6675;color:#fff;font-size:11px;font-weight:700;
     padding:2px 9px;border-radius:6px 6px 0 0;cursor:grab;white-space:nowrap;}
   .item.type-room.selected .room-tab{background:var(--select);}
@@ -458,6 +464,8 @@
     background:
       repeating-linear-gradient(90deg, rgba(150,110,60,.07) 0 1.5px, transparent 1.5px 70px),
       repeating-linear-gradient(0deg,  rgba(150,110,60,.05) 0 1.5px, transparent 1.5px 34px);}
+  /* 격자선 끄면 학교버전 기본배경의 격자선도 강의장과 동일하게 사라지도록 */
+  body.school-mode #canvas.no-grid::before{background:none;}
 
   /* ===== Background image ===== */
   /* ===== Background image (movable/resizable element) ===== */
@@ -473,7 +481,11 @@
   .opacity-card{margin:0 4px 12px;display:flex;flex-direction:column;gap:6px;}
   .op-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600;}
   .op-row span{flex-shrink:0;width:62px;}
-  .op-row input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
+  .op-row input[type=range]{flex:1;accent-color:var(--accent);height:9px;cursor:pointer;}
+  .op-row input[type=range]::-webkit-slider-runnable-track{height:9px;border-radius:6px;}
+  .op-row input[type=range]::-moz-range-track{height:9px;border-radius:6px;}
+  /* 윤곽 투명도 카드 (강의장 윤곽 추가 버튼 아래) */
+  .room-op-card{margin:2px 4px 14px;}
 
   /* ===== Align bar (다중선택 정렬) ===== */
   .align-bar{position:fixed;bottom:50px;left:50%;z-index:45;display:none;align-items:center;gap:2px;
@@ -554,7 +566,6 @@
       </div>
       <div class="opacity-card">
         <label class="op-row"><span>배경 투명도</span><input type="range" id="bgOpacity" min="10" max="100" value="100"></label>
-        <label class="op-row"><span>윤곽 투명도</span><input type="range" id="roomOpacity" min="10" max="100" value="100"></label>
       </div>
       <div class="auto-card hall-only">
         <div class="auto-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="1.6" fill="currentColor"/><circle cx="14" cy="12" r="1.6" fill="currentColor"/><circle cx="10" cy="19" r="1.6" fill="currentColor"/></svg>자동배치</div>
@@ -617,7 +628,7 @@
         </div>
       </div>
 
-      <div class="side-hint" id="sideHint">항목을 클릭하면 도면 가운데에 배치됩니다. <b>윤곽</b>을 먼저 깔고 그 안에 배치하면, 이미지 저장 시 윤곽 안쪽만 저장됩니다.</div>
+      <div class="side-hint" id="sideHint">항목을 클릭하면 도면 가운데에 배치됩니다. 이미지 저장 시 <b>베젤(제목 포함) 전체 배치도</b>가 저장되며, <b>배경 이미지</b>를 추가한 경우에는 배경 이미지 범위까지만 저장됩니다.</div>
       <div id="paletteGroups"></div>
     </aside>
 
@@ -868,9 +879,10 @@ function setZoom(z, anchor){
 
 /* ---------- Build sidebar ---------- */
 const paletteGroups = document.getElementById('paletteGroups');
+let roomOpacityValue = 100;   // 윤곽 투명도 (사이드바 재구성 후에도 값 유지)
 function buildSidebar(catalog){
   paletteGroups.innerHTML = '';
-  catalog.forEach(group=>{
+  catalog.forEach((group, gi)=>{
     const t = document.createElement('div'); t.className='group-title'; t.textContent=group.group;
     paletteGroups.appendChild(t);
     const grid = document.createElement('div'); grid.className='palette';
@@ -881,6 +893,14 @@ function buildSidebar(catalog){
       grid.appendChild(b);
     });
     paletteGroups.appendChild(grid);
+    // 강의장/교실 윤곽 추가 버튼 바로 아래에 '윤곽 투명도' 조절 바 배치
+    if(group.items.some(d=>d.type==='room')){
+      const opCard = document.createElement('div');
+      opCard.className = 'opacity-card room-op-card';
+      opCard.innerHTML = '<label class="op-row"><span>윤곽 투명도</span>'
+        + '<input type="range" id="roomOpacity" min="10" max="100" value="'+roomOpacityValue+'"></label>';
+      paletteGroups.appendChild(opCard);
+    }
   });
 }
 buildSidebar(CATALOG);
@@ -923,6 +943,7 @@ function innerHTML(item){
   }
   if(item.type==='room'){
     return `<div class="shape room-shape"></div>`
+         + `<div class="room-edge re-t"></div><div class="room-edge re-b"></div><div class="room-edge re-l"></div><div class="room-edge re-r"></div>`
          + `<div class="room-tab">${appMode==='school'?'교실':'강의장'}</div>`
          + `<div class="room-size" title="더블클릭하여 강의장 크기·분반명 입력">${escapeHtml(item.roomLabel||'크기 입력')}</div>`;
   }
@@ -1885,9 +1906,13 @@ document.getElementById('bgOpacity').addEventListener('input', e=>{
   const v=(+e.target.value)/100;
   state.items.filter(i=>i.type==='bgimage').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
 });
-document.getElementById('roomOpacity').addEventListener('input', e=>{
-  const v=(+e.target.value)/100;
-  state.items.filter(i=>i.type==='room').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
+// 윤곽 투명도 슬라이더는 사이드바 재구성 시 다시 만들어지므로 위임으로 처리
+paletteGroups.addEventListener('input', e=>{
+  if(e.target && e.target.id==='roomOpacity'){
+    roomOpacityValue = +e.target.value;
+    const v = roomOpacityValue/100;
+    state.items.filter(i=>i.type==='room').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
+  }
 });
 
 
@@ -1914,7 +1939,7 @@ async function exportPNG(){
   if(typeof html2canvas==='undefined'){ alert('이미지 변환 도구를 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.'); return; }
   clearSelection();
   document.getElementById('sheetMeta').textContent = new Date().toLocaleDateString('ko-KR');
-  const room = state.items.find(i=>i.type==='room');
+  const bgimg = state.items.find(i=>i.type==='bgimage');
   const bg = (getComputedStyle(canvas).backgroundColor || '#ffffff');
   const prevZoom = zoom;
   if(zoom!==1){ zoom=1; applyZoom(); }
@@ -1922,16 +1947,26 @@ async function exportPNG(){
   const scale=2;
   try{
     let outCanvas;
-    if(room){
-      const full = await html2canvas(canvas, { backgroundColor:bg, scale, useCORS:true });
+    if(bgimg){
+      // 배경 이미지가 있으면: 상단 베젤(제목 헤더)을 배경 가로폭에 맞추고, 배경 이미지 범위까지만 저장
+      const fullCanvas  = await html2canvas(canvas, { backgroundColor:bg, scale, useCORS:true });
+      const headerEl    = document.querySelector('.sheet-title');
+      const headerCanvas= await html2canvas(headerEl, { backgroundColor:'#ffffff', scale, useCORS:true });
+      const targetW = Math.max(1, Math.round(bgimg.w*scale));
+      const headerH = Math.max(1, Math.round(headerCanvas.height * (targetW/headerCanvas.width)));
+      const bodyH   = Math.max(1, Math.round(bgimg.h*scale));
+      // 배경 이미지 영역을 캔버스 캡처 범위 안으로 보정
+      let sx = Math.round(bgimg.x*scale), sy = Math.round(bgimg.y*scale);
+      let sw = Math.round(bgimg.w*scale), sh = Math.round(bgimg.h*scale);
       const c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(room.w*scale));
-      c.height= Math.max(1, Math.round(room.h*scale));
+      c.width = targetW; c.height = headerH + bodyH;
       const ctx = c.getContext('2d');
       ctx.fillStyle=bg; ctx.fillRect(0,0,c.width,c.height);
-      ctx.drawImage(full, room.x*scale, room.y*scale, room.w*scale, room.h*scale, 0,0, c.width, c.height);
+      ctx.drawImage(headerCanvas, 0,0, headerCanvas.width, headerCanvas.height, 0,0, targetW, headerH);
+      ctx.drawImage(fullCanvas, sx, sy, sw, sh, 0, headerH, targetW, bodyH);
       outCanvas = c;
     } else {
+      // 배경 이미지가 없으면: 베젤(제목 헤더 + 윤곽 바깥)까지 전체 배치도 저장
       outCanvas = await html2canvas(document.getElementById('capture'), { backgroundColor:bg, scale, useCORS:true });
     }
     const a=document.createElement('a');
