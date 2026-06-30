@@ -461,11 +461,14 @@
   /* ===== School mode background (교실 느낌) ===== */
   body.school-mode #canvas{background-color:#F4E9D6;}
   body.school-mode #canvas::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
-    background:
-      repeating-linear-gradient(90deg, rgba(150,110,60,.07) 0 1.5px, transparent 1.5px 70px),
-      repeating-linear-gradient(0deg,  rgba(150,110,60,.05) 0 1.5px, transparent 1.5px 34px);}
+    background-image:
+      linear-gradient(rgba(150,110,60,.07) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(150,110,60,.07) 1px,transparent 1px),
+      linear-gradient(rgba(150,110,60,.16) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(150,110,60,.16) 1px,transparent 1px);
+    background-size:30px 30px,30px 30px,150px 150px,150px 150px;}
   /* 격자선 끄면 학교버전 기본배경의 격자선도 강의장과 동일하게 사라지도록 */
-  body.school-mode #canvas.no-grid::before{background:none;}
+  body.school-mode #canvas.no-grid::before{background-image:none;}
 
   /* ===== Background image ===== */
   /* ===== Background image (movable/resizable element) ===== */
@@ -481,9 +484,27 @@
   .opacity-card{margin:0 4px 12px;display:flex;flex-direction:column;gap:6px;}
   .op-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600;}
   .op-row span{flex-shrink:0;width:62px;}
-  .op-row input[type=range]{flex:1;accent-color:var(--accent);height:9px;cursor:pointer;}
-  .op-row input[type=range]::-webkit-slider-runnable-track{height:9px;border-radius:6px;}
-  .op-row input[type=range]::-moz-range-track{height:9px;border-radius:6px;}
+  /* 실시간 퍼센트 표기 (바 좌측) */
+  .op-val{flex-shrink:0;width:34px;text-align:right;font-size:11px;font-weight:800;color:var(--accent-dark);
+    font-variant-numeric:tabular-nums;}
+  /* 투명도 바: 깔끔한 트랙 + 핸들 */
+  .op-row input[type=range]{
+    -webkit-appearance:none;appearance:none;flex:1;height:8px;border-radius:999px;cursor:pointer;outline:none;
+    background:linear-gradient(90deg,var(--accent) 0 var(--fill,100%),var(--line-strong) var(--fill,100%) 100%);
+  }
+  .op-row input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:transparent;}
+  .op-row input[type=range]::-moz-range-track{height:8px;border-radius:999px;background:transparent;}
+  .op-row input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;margin-top:-6px;width:18px;height:18px;border-radius:50%;
+    background:#fff;border:3px solid var(--accent);box-shadow:0 1px 3px rgba(45,33,20,.28);cursor:grab;
+    transition:transform .08s ease,box-shadow .08s ease;}
+  .op-row input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--accent);
+    box-shadow:0 1px 3px rgba(45,33,20,.28);cursor:grab;transition:transform .08s ease;}
+  .op-row input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 5px var(--accent-soft),0 1px 3px rgba(45,33,20,.28);}
+  .op-row input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1.06);}
+  .op-row input[type=range]:active::-moz-range-thumb{cursor:grabbing;transform:scale(1.06);}
+  body.dark .op-val{color:var(--accent);}
   /* 윤곽 투명도 카드 (강의장 윤곽 추가 버튼 아래) */
   .room-op-card{margin:2px 4px 14px;}
 
@@ -565,7 +586,7 @@
         <input type="file" id="bgFile" accept="image/*" hidden>
       </div>
       <div class="opacity-card">
-        <label class="op-row"><span>배경 투명도</span><input type="range" id="bgOpacity" min="10" max="100" value="100"></label>
+        <label class="op-row"><span>배경 투명도</span><b class="op-val">100%</b><input type="range" id="bgOpacity" min="10" max="100" value="100"></label>
       </div>
       <div class="auto-card hall-only">
         <div class="auto-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="1.6" fill="currentColor"/><circle cx="14" cy="12" r="1.6" fill="currentColor"/><circle cx="10" cy="19" r="1.6" fill="currentColor"/></svg>자동배치</div>
@@ -880,6 +901,16 @@ function setZoom(z, anchor){
 /* ---------- Build sidebar ---------- */
 const paletteGroups = document.getElementById('paletteGroups');
 let roomOpacityValue = 100;   // 윤곽 투명도 (사이드바 재구성 후에도 값 유지)
+/* 투명도 바 시각 동기화: 채움 비율(--fill) + 좌측 % 표기 */
+function syncRange(input){
+  if(!input) return;
+  const min=+input.min||0, max=+input.max||100, v=+input.value;
+  const pos = max>min ? (v-min)/(max-min)*100 : 0;
+  input.style.setProperty('--fill', pos.toFixed(1)+'%');
+  const row = input.closest('.op-row');
+  const valEl = row && row.querySelector('.op-val');
+  if(valEl) valEl.textContent = v+'%';
+}
 function buildSidebar(catalog){
   paletteGroups.innerHTML = '';
   catalog.forEach((group, gi)=>{
@@ -898,8 +929,10 @@ function buildSidebar(catalog){
       const opCard = document.createElement('div');
       opCard.className = 'opacity-card room-op-card';
       opCard.innerHTML = '<label class="op-row"><span>윤곽 투명도</span>'
+        + '<b class="op-val">'+roomOpacityValue+'%</b>'
         + '<input type="range" id="roomOpacity" min="10" max="100" value="'+roomOpacityValue+'"></label>';
       paletteGroups.appendChild(opCard);
+      syncRange(opCard.querySelector('#roomOpacity'));
     }
   });
 }
@@ -1902,16 +1935,20 @@ function removeBgImage(){
   state.items = state.items.filter(i=>i.type!=='bgimage');
   updateChrome(); refreshEmpty();
 }
-document.getElementById('bgOpacity').addEventListener('input', e=>{
+const bgOpacityInput = document.getElementById('bgOpacity');
+bgOpacityInput.addEventListener('input', e=>{
   const v=(+e.target.value)/100;
   state.items.filter(i=>i.type==='bgimage').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
+  syncRange(e.target);
 });
+syncRange(bgOpacityInput);
 // 윤곽 투명도 슬라이더는 사이드바 재구성 시 다시 만들어지므로 위임으로 처리
 paletteGroups.addEventListener('input', e=>{
   if(e.target && e.target.id==='roomOpacity'){
     roomOpacityValue = +e.target.value;
     const v = roomOpacityValue/100;
     state.items.filter(i=>i.type==='room').forEach(i=>{ i.opacity=v; i.el.style.opacity=v; });
+    syncRange(e.target);
   }
 });
 
