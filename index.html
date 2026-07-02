@@ -2149,15 +2149,15 @@ function autoArrange(){
   const area = room ? {x:room.x+16, y:room.y+38, w:Math.max(gw,room.w-32), h:Math.max(gh,room.h-54)}
                     : {x:30, y:30, w:Math.max(gw,(cw||900)-60), h:Math.max(gh,(ch||560)-60)};
 
-  // 이름표가 옆/아래 모둠과 겹치지 않도록 모둠 간 최소 간격 확보
+  // 이름표가 옆/아래 모둠과 겹치지 않을 정도의 "고정" 간격만 사용 (남는 공간에 맞춰 억지로 벌리지 않음)
   const NAME_GAP_X=92, NAME_GAP_Y=54;
   let cols=Math.max(1, Math.floor((area.w+NAME_GAP_X)/(gw+NAME_GAP_X)));
   cols=Math.min(cols, groups);
   const rows=Math.ceil(groups/cols);
   const gxIn=Math.max(0, parseInt(document.getElementById('apGapX').value,10)||0);
   const gyIn=Math.max(0, parseInt(document.getElementById('apGapY').value,10)||0);
-  const gapX = cols>1 ? Math.max(NAME_GAP_X, gxIn, (area.w-cols*gw)/(cols-1)) : 0;
-  const gapY = rows>1 ? Math.max(NAME_GAP_Y, gyIn, (area.h-rows*gh)/(rows-1)) : 0;
+  const gapX = Math.max(NAME_GAP_X, gxIn);
+  const gapY = Math.max(NAME_GAP_Y, gyIn);
   const totalW = cols*gw+(cols-1)*gapX;
   const totalH = rows*gh+(rows-1)*gapY;
   const startX = area.x + Math.max(0,(area.w-totalW)/2);
