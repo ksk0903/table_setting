@@ -225,6 +225,35 @@
   .chair-ghost{position:fixed;z-index:300;pointer-events:none;font-size:13px;font-weight:800;color:#5a4a2a;
     background:#fff;border:1.5px solid var(--accent);border-radius:11px;padding:3px 8px;box-shadow:0 4px 12px rgba(45,33,20,.3);transform:translate(-50%,-50%);}
   body.dark .chair .chair-name{background:#1D2530;color:#ecd9af;border-color:var(--accent);}
+  /* 반장 표시 */
+  .chair.leader .chair-name{border-color:#D9A400;background:linear-gradient(180deg,#FFF7DC,#fff);
+    box-shadow:0 0 0 2px rgba(217,164,0,.22),0 1px 3px rgba(45,33,20,.2);}
+  .chair-name .crown{margin-right:2px;}
+  body.dark .chair.leader .chair-name{background:linear-gradient(180deg,#3a3220,#1D2530);border-color:#E8B93A;}
+  /* 부반장 표시 */
+  .chair.vice .chair-name{border-color:#6E85AE;background:linear-gradient(180deg,#EEF2F8,#fff);
+    box-shadow:0 0 0 2px rgba(110,133,174,.20),0 1px 3px rgba(45,33,20,.2);}
+  body.dark .chair.vice .chair-name{background:linear-gradient(180deg,#26344a,#1D2530);border-color:#8AA3CC;}
+  /* 추첨(제비뽑기) 애니메이션 칩 */
+  .roll-chip{position:fixed;z-index:250;pointer-events:none;font-size:13px;font-weight:800;color:#5a4a2a;
+    background:#fff;border:1.5px solid var(--accent);border-radius:11px;padding:3px 8px;white-space:nowrap;
+    box-shadow:0 3px 10px rgba(45,33,20,.25);transform:translate(-50%,-50%) scale(1);
+    transition:transform .16s cubic-bezier(.34,1.56,.64,1), box-shadow .16s;}
+  .roll-chip.spin{animation:chipSpin .11s linear infinite;}
+  @keyframes chipSpin{0%{transform:translate(-50%,-50%) scale(1) rotate(-3deg);}50%{transform:translate(-50%,-50%) scale(1.06) rotate(3deg);}100%{transform:translate(-50%,-50%) scale(1) rotate(-3deg);}}
+  .roll-chip.locked{transform:translate(-50%,-50%) scale(1.3);box-shadow:0 0 0 3px var(--accent-soft),0 4px 14px rgba(45,33,20,.3);}
+  .roll-chip.leader{border-color:#D9A400;}
+  body.dark .roll-chip{background:#1D2530;color:#ecd9af;}
+  .capturing .roll-chip{display:none!important;}
+  /* 학교버전: 이름이 둥실둥실 떠다니다 자기 자리로 날아가는 연출 */
+  .roll-chip.floaty{animation:chipFloat .7s ease-in-out infinite alternate;transition:box-shadow .16s;}
+  @keyframes chipFloat{
+    from{transform:translate(calc(-50% + var(--fx,0px)), calc(-50% + var(--fy,0px))) scale(1) rotate(-4deg);}
+    to{transform:translate(calc(-50% - var(--fx,0px)), calc(-50% - var(--fy,0px))) scale(1.07) rotate(4deg);}
+  }
+  .roll-chip.flying{transition:left .5s cubic-bezier(.32,.64,.28,1), top .5s cubic-bezier(.32,.64,.28,1), transform .5s ease;
+    transform:translate(-50%,-50%) scale(1.1) rotate(0deg);box-shadow:0 6px 16px rgba(45,33,20,.32);}
+  .btn:disabled,.btn.auto-go:disabled{opacity:.5;cursor:not-allowed;pointer-events:none;}
   .seat-tip{position:fixed;z-index:260;pointer-events:none;background:rgba(43,33,18,.94);color:#fff;
     font-size:11px;font-weight:700;padding:4px 9px;border-radius:8px;white-space:nowrap;
     transform:translate(-50%,-100%);box-shadow:0 4px 12px rgba(0,0,0,.28);opacity:0;transition:opacity .08s;}
@@ -416,10 +445,11 @@
     transition:border-color .14s,box-shadow .14s;box-shadow:var(--shadow-xs);}
   .auto-card input:hover,.auto-card select:hover{border-color:#D2C8B8;}
   .auto-card input:focus,.auto-card select:focus{border-color:var(--accent);box-shadow:var(--ring);}
-  .auto-row{display:flex;gap:8px;}
+  .auto-row{display:flex;gap:8px;min-width:0;}
   .gap-hint{font-size:10.5px;color:var(--muted);margin:-2px 2px 2px;}
   .auto-row label{flex:1;min-width:0;}
-  .auto-go{justify-content:center;margin-top:1px;width:100%;}
+  .auto-row > *{min-width:0;}
+  .auto-go{justify-content:center;margin-top:1px;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 
   /* ===== Modal ===== */
   .modal-overlay{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;
@@ -724,14 +754,23 @@
           <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" style="display:none">
         </div>
         <div class="gap-hint" id="rosterFileInfo">엑셀 양식대로 채워 불러오면 배치된 모둠 순서대로 이름이 들어갑니다.</div>
+        <label style="margin-top:4px">자리 배치 방식
+          <select id="rosterGenderMode">
+            <option value="basic">자유배정 (기본)</option>
+            <option value="mixed">혼성 — 남 + 여 짝 배정</option>
+            <option value="same">동성 — 남남 / 여여로 묶기</option>
+          </select>
+        </label>
+        <div class="gap-hint" id="rosterGenderHint">엑셀 "성별" 열을 채워 불러오면 혼성·동성 배정을 쓸 수 있어요.</div>
         <div class="auto-row">
           <button class="btn auto-go" id="rosterClear" style="flex:1">지우기</button>
-          <button class="btn auto-go" id="rosterAssignSeq" style="flex:1.4">모둠순 배정</button>
-          <button class="btn primary auto-go" id="rosterAssign" style="flex:1.4">랜덤배정</button>
+          <button class="btn auto-go" id="rosterAssignSeq" style="flex:1.4">🎲 모둠순 추첨</button>
+          <button class="btn primary auto-go" id="rosterAssign" style="flex:1.4">🎲 랜덤 추첨</button>
         </div>
         <details style="margin-top:4px"><summary style="font-size:11px;color:var(--muted);cursor:pointer;font-weight:700">직접 입력 (텍스트 명단)</summary>
-        <textarea id="rosterNames" placeholder="이름을 한 줄에 하나씩 붙여넣기&#10;(엑셀 1열=한 모둠씩 여러 열도 가능)" style="margin-top:6px"></textarea>
+        <textarea id="rosterNames" placeholder="이름을 한 줄에 하나씩 붙여넣기&#10;(성별도 함께: 김철수,남)" style="margin-top:6px"></textarea>
         </details>
+        <div class="gap-hint">이름을 드래그해 자리를 바꾸거나, 이름 위에서 우클릭하면 <b>반장 지정</b>도 가능해요.</div>
       </div>
 
       <div class="side-hint" id="sideHint">항목을 클릭하면 도면 가운데에 배치됩니다. 이미지 저장 시 <b>베젤(제목 포함) 전체 배치도</b>가 저장되며, <b>배경 이미지</b>를 추가한 경우에는 배경 이미지 범위까지만 저장됩니다.</div>
@@ -1198,16 +1237,21 @@ function refreshTable(item){
   }
   const cm = chairMetrics(item);
   const names = item.seatNames || [];
+  const leaders = item.seatLeader || [];
+  const vices = item.seatVice || [];
   chairsEl.innerHTML = chairPositions(item)
     .map((p,i)=>{
       const nm = (names[i]||'').trim();
-      const cls = 'chair' + (nm?' named':'');
+      const isLeader = nm && !!leaders[i];
+      const isVice = nm && !isLeader && !!vices[i];
+      const cls = 'chair' + (nm?' named':'') + (isLeader?' leader':'') + (isVice?' vice':'');
       let inner = '';
       if(nm){
         // 이름표를 테이블 바깥쪽으로 밀어 테이블에 가리지 않게 (크기가 변해도 유지)
         const sx=Math.round((p.dx||0)*58), sy=Math.round((p.dy||0)*58);
         const tf = `transform:translate(calc(-50% + ${sx}%), calc(-50% + ${sy}%))`;
-        inner = `<span class="chair-name" style="${tf}">${escapeHtml(nm)}</span>`;
+        const crown = isLeader ? '<span class="crown" title="반장">👑</span>' : (isVice ? '<span class="crown" title="부반장">🥈</span>' : '');
+        inner = `<span class="chair-name" style="${tf}">${crown}${escapeHtml(nm)}</span>`;
       }
       return `<div class="${cls}" data-seat="${i}" style="left:${p.x}px;top:${p.y}px;width:${cm.size}px;height:${cm.size}px">${inner}</div>`;
     }).join('');
@@ -1679,9 +1723,10 @@ function addFromCatalog(def){
 /* ---------- Clipboard / delete ---------- */
 function copySel(){
   state.clipboard = [...state.selected].map(id=>{
-    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,seatNames,color,seatRecords,chairSize,partIdx}=getItem(id);
+    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,seatNames,color,seatRecords,chairSize,partIdx,seatLeader,seatVice}=getItem(id);
     return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,color,chairSize,partIdx,
-            seatNames:seatNames?[...seatNames]:undefined, seatRecords:seatRecords?seatRecords.map(r=>r?[...r]:r):undefined};
+            seatNames:seatNames?[...seatNames]:undefined, seatRecords:seatRecords?seatRecords.map(r=>r?[...r]:r):undefined,
+            seatLeader:seatLeader?[...seatLeader]:undefined, seatVice:seatVice?[...seatVice]:undefined};
   });
 }
 function cutSel(){ if(!state.selected.size) return; copySel(); deleteSel(); }
@@ -1701,6 +1746,8 @@ function pasteSel(){
     if(d.groupName!==undefined) item.groupName=d.groupName;
     if(d.seatNames!==undefined) item.seatNames=[...d.seatNames];
     if(d.seatRecords!==undefined) item.seatRecords=d.seatRecords.map(r=>r?[...r]:r);
+    if(d.seatLeader!==undefined) item.seatLeader=[...d.seatLeader];
+    if(d.seatVice!==undefined) item.seatVice=[...d.seatVice];
     if(d.color!==undefined) item.color=d.color;
     if(d.chairSize!==undefined) item.chairSize=d.chairSize;
     if(d.partIdx!==undefined) item.partIdx=d.partIdx;
@@ -1780,7 +1827,7 @@ function refreshEmpty(){ emptyState.style.display = state.items.length ? 'none' 
 
 /* ---------- 모둠 인원편성표 (하단 표) ---------- */
 let rosterVisible = false;   // 사용자가 인원편성표를 켜둔 상태인지
-let rosterHeader = ['번호','소속','이름','과목','항목2','항목3','항목4','항목5','항목6']; // 엑셀 양식 헤더(수정 가능)
+let rosterHeader = ['번호','소속','이름','성별','과목','항목2','항목3','항목4','항목5']; // 엑셀 양식 헤더(수정 가능)
 let rosterNameCol = 2;       // '이름' 열 인덱스
 // 같은 groupId(자동배치 한 모둠 묶음) 또는 단일 테이블을 하나의 '모둠 단위'로 묶음
 function allUnits(){
@@ -1810,7 +1857,9 @@ function unitMembers(u){   // 이름이 배정된 좌석만 (엑셀/배치 순�
   return unitSeatRefs(u).map(r=>{
     const nm=((r.item.seatNames&&r.item.seatNames[r.idx])||'').trim();
     const rec=(r.item.seatRecords&&r.item.seatRecords[r.idx])||null;
-    return {name:nm, rec};
+    const leader=getSeatLeader(r.item, r.idx);
+    const vice=getSeatVice(r.item, r.idx);
+    return {name:nm, rec, leader, vice};
   }).filter(m=>m.name);
 }
 function renderGroupRoster(){
@@ -1835,7 +1884,7 @@ function renderGroupRoster(){
       const tds = shownCols.map(idx=>{
         let v;
         if(idx===0) v=String(i+1);
-        else if(idx===rosterNameCol) v=m.name;
+        else if(idx===rosterNameCol) v=(m.leader?'👑 ':m.vice?'🥈 ':'')+m.name;
         else v = (m.rec && m.rec[idx]!=null) ? String(m.rec[idx]) : '';
         return `<td class="${idx===rosterNameCol?'gr-name':''}">${escapeHtml(v)}</td>`;
       }).join('');
@@ -1893,7 +1942,12 @@ const CTX_ICON={
   duplicate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V4h12"/></svg>',
   rotate45:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3.5V9h-5.5"/></svg>',
   'delete':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>',
-  selectAll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/></svg>'
+  selectAll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/></svg>',
+  leaderOn:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px">👑</span>',
+  leaderOff:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px;opacity:.55">👑</span>',
+  viceOn:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px">🥈</span>',
+  viceOff:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px;opacity:.55">🥈</span>',
+  seatClear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l6-6m8-8l3.5 3.5a2 2 0 0 1 0 2.8L12 22H7l-4-4L14.5 6.5a2 2 0 0 1 2.8 0Z"/></svg>'
 };
 function ctxRow(act,label,kbd,opts){
   opts=opts||{};
@@ -1911,6 +1965,27 @@ function showCtx(html, x, y){
 canvas.addEventListener('contextmenu', e=>{
   if(e.target.closest('.seat-input') || (e.target.closest('[contenteditable="true"]'))) return; // 입력 중엔 기본 메뉴
   e.preventDefault();
+  const chairEl = e.target.closest && e.target.closest('.chair.named');
+  if(chairEl){
+    const itemEl = chairEl.closest('.item'); const item = state.items.find(s=>s.el===itemEl);
+    if(item){
+      const idx = parseInt(chairEl.dataset.seat,10);
+      if(!state.selected.has(item.id)) selectG(item);
+      const isLeader = getSeatLeader(item, idx);
+      const isVice = getSeatVice(item, idx);
+      const nm = (item.seatNames&&item.seatNames[idx])||'';
+      showCtx(
+        `<div class="ctx-item" style="pointer-events:none;color:var(--muted);font-size:11px;padding:5px 10px 3px">${escapeHtml(nm)}</div>`+
+        ctxRow(isLeader?'leaderOff':'leaderOn', isLeader?'반장 해제':'반장으로 지정','')+
+        ctxRow(isVice?'viceOff':'viceOn', isVice?'부반장 해제':'부반장으로 지정','')+
+        `<div class="ctx-sep"></div>`+
+        ctxRow('seatClear','이 자리 비우기','',{danger:true}),
+        e.clientX, e.clientY);
+      ctxMenu.dataset.seatItem = item.id; ctxMenu.dataset.seatIdx = idx;
+      return;
+    }
+  }
+  ctxMenu.dataset.seatItem=''; ctxMenu.dataset.seatIdx='';
   const it=itemFromEl(e.target);
   const canPaste=state.clipboard.length>0;
   if(it){
@@ -1935,7 +2010,19 @@ canvas.addEventListener('contextmenu', e=>{
 });
 ctxMenu.addEventListener('click', e=>{
   const row=e.target.closest('.ctx-item'); if(!row || row.classList.contains('disabled')) return;
-  const fn=CTX_ACTIONS[row.dataset.action]; hideCtx(); if(fn) fn();
+  const act = row.dataset.action;
+  if(act==='leaderOn' || act==='leaderOff' || act==='viceOn' || act==='viceOff' || act==='seatClear'){
+    const item=getItem(ctxMenu.dataset.seatItem); const idx=parseInt(ctxMenu.dataset.seatIdx,10);
+    hideCtx();
+    if(!item || isNaN(idx)) return;
+    pushHistory();
+    if(act==='seatClear'){ setSeatRecord(item, idx, '', null); setSeatLeaderFlag(item, idx, false); setSeatViceFlag(item, idx, false); }
+    else if(act==='leaderOn' || act==='leaderOff'){ setSeatLeaderFlag(item, idx, act==='leaderOn'); }
+    else { setSeatViceFlag(item, idx, act==='viceOn'); }
+    rebuild(item); refreshRoster();
+    return;
+  }
+  const fn=CTX_ACTIONS[act]; hideCtx(); if(fn) fn();
 });
 document.addEventListener('mousedown', e=>{ if(!ctxMenu.contains(e.target)) hideCtx(); });
 document.addEventListener('scroll', hideCtx, true);
@@ -1944,7 +2031,7 @@ window.addEventListener('resize', hideCtx);
 
 /* ---------- 이름 드래그로 자리 교환 ---------- */
 let seatDrag=null;
-const seatTip=document.createElement('div'); seatTip.className='seat-tip'; seatTip.textContent='꾹 눌러서 자리 바꾸기';
+const seatTip=document.createElement('div'); seatTip.className='seat-tip'; seatTip.textContent='꾹 눌러서 자리 바꾸기 / 우클릭 반장배정';
 document.body.appendChild(seatTip);
 function showSeatTip(chair){
   const chip=chair.querySelector('.chair-name')||chair;
@@ -1968,12 +2055,14 @@ function chairRefAt(x,y){
   return {item, idx:parseInt(chair.dataset.seat,10), chair};
 }
 function swapSeats(a,ai,b,bi){
-  const an=(a.seatNames&&a.seatNames[ai])||'', ar=(a.seatRecords&&a.seatRecords[ai])||null;
-  const bn=(b.seatNames&&b.seatNames[bi])||'', br=(b.seatRecords&&b.seatRecords[bi])||null;
-  setSeatRecord(a,ai,bn,br); setSeatRecord(b,bi,an,ar);
+  const an=(a.seatNames&&a.seatNames[ai])||'', ar=(a.seatRecords&&a.seatRecords[ai])||null, al=getSeatLeader(a,ai), av=getSeatVice(a,ai);
+  const bn=(b.seatNames&&b.seatNames[bi])||'', br=(b.seatRecords&&b.seatRecords[bi])||null, bl=getSeatLeader(b,bi), bv=getSeatVice(b,bi);
+  setSeatRecord(a,ai,bn,br); setSeatLeaderFlag(a,ai,bl); setSeatViceFlag(a,ai,bv);
+  setSeatRecord(b,bi,an,ar); setSeatLeaderFlag(b,bi,al); setSeatViceFlag(b,bi,av);
 }
 canvas.addEventListener('mousedown', e=>{
   if(e.button!==0) return;
+  if(assigningInProgress) return;
   const chair=e.target.closest && e.target.closest('.chair.named'); if(!chair) return;
   const itemEl=chair.closest('.item'); const item=state.items.find(s=>s.el===itemEl); if(!item) return;
   e.stopPropagation(); e.preventDefault();
@@ -2271,82 +2360,207 @@ function setSeatRecord(item, idx, name, rec){
   if(!item.seatRecords) item.seatRecords=[];
   item.seatRecords[idx]=rec||null;
 }
-function clearSeats(item){ item.seatNames=[]; item.seatRecords=[]; if(item.type==='student-desk'||item.seats===1) item.studentName=''; }
+function getSeatLeader(item, idx){ return !!(item.seatLeader && item.seatLeader[idx]); }
+function setSeatLeaderFlag(item, idx, val){ if(!item.seatLeader) item.seatLeader=[]; item.seatLeader[idx]=!!val; if(val) setSeatViceFlag(item, idx, false); }
+function getSeatVice(item, idx){ return !!(item.seatVice && item.seatVice[idx]); }
+function setSeatViceFlag(item, idx, val){ if(!item.seatVice) item.seatVice=[]; item.seatVice[idx]=!!val; if(val) { if(item.seatLeader) item.seatLeader[idx]=false; } }
+function clearSeats(item){ item.seatNames=[]; item.seatRecords=[]; item.seatLeader=[]; item.seatVice=[]; if(item.type==='student-desk'||item.seats===1) item.studentName=''; }
 
-function assignRoster(mode){   // mode: 'random' | 'sequential' (텍스트 직접입력)
-  const units=allUnitsOrdered();
-  if(!units.length){ alert('배정할 책상/테이블이 없습니다. 먼저 자동배치로 자리를 만들어 주세요.'); return; }
-  const allRefs=[]; units.forEach(u=> unitSeatRefs(u).forEach(r=>allRefs.push(r)));
-  const totalSeats=allRefs.length;
-  const cols=parseRosterCols();
-  const flat=parseRosterFlat();
-  if(!flat.length){ alert('명단을 먼저 붙여넣어 주세요. (한 줄에 한 명 · 엑셀 붙여넣기 가능)'); return; }
-  pushHistory();
-  units.forEach(u=> u.items.forEach(it=> clearSeats(it) ));
-  let assigned=0, totalNames;
-  if(mode==='sequential' && cols.length>1){
-    let gUnits=groupUnits(); if(!gUnits.length) gUnits=units;
-    totalNames=cols.reduce((s,c)=>s+c.length,0);
-    gUnits.forEach((u,gi)=>{
-      const refs=unitSeatRefs(u), col=cols[gi]||[];
-      refs.forEach((r,i)=>{ const nm=col[i]||''; setSeatRecord(r.item,r.idx,nm,null); if(nm) assigned++; });
+/* ---------- 성별 분류 & 정렬 (#3) ---------- */
+function classifyGender(v){
+  const s=String(v==null?'':v).trim();
+  if(!s) return null;
+  if(/^(남|남자|male|m|boy)/i.test(s)) return 'M';
+  if(/^(여|여자|female|f|girl)/i.test(s)) return 'F';
+  return null;
+}
+function orderRecordsByGender(records, genderCol, mode, randomize){
+  if(mode==='basic' || genderCol==null) return randomize ? shuffleArr(records.slice()) : records.slice();
+  const M=[], F=[], U=[];
+  records.forEach(rec=>{ const g=classifyGender(rec[genderCol]); if(g==='M') M.push(rec); else if(g==='F') F.push(rec); else U.push(rec); });
+  if(randomize){ shuffleArr(M); shuffleArr(F); shuffleArr(U); }
+  if(mode==='mixed'){
+    const out=[]; const n=Math.max(M.length,F.length);
+    for(let i=0;i<n;i++){ if(M[i]) out.push(M[i]); if(F[i]) out.push(F[i]); }
+    return out.concat(U);
+  }
+  return M.concat(F).concat(U);   // 'same' — 동성끼리 이어서 채움
+}
+/* ---------- 직접 입력 텍스트 명단 (이름 또는 "이름,성별") ---------- */
+function parseRosterFlatWithGender(){
+  const lines = document.getElementById('rosterNames').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  let genderCol=null;
+  const records = lines.map(line=>{
+    const parts = line.split(/[\t,]/).map(s=>s.trim()).filter(Boolean);
+    if(parts.length>=2 && classifyGender(parts[1])){ genderCol=1; return [parts[0], parts[1]]; }
+    return [parts[0]||line];
+  });
+  return {records, genderCol};
+}
+
+/* ---------- 🎲 추첨(제비뽑기) 애니메이션 ---------- */
+let assigningInProgress=false;
+function setAssignUIBusy(busy){
+  assigningInProgress=busy;
+  ['rosterAssign','rosterAssignSeq','rosterClear','xlsxImport','xlsxTemplate'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.disabled=busy;
+  });
+}
+function chairElOf(item, idx){ return item.el.querySelector('.chair[data-seat="'+idx+'"]'); }
+// cells: [{item, idx, name, rec, leader}] — 화면에서 데굴데굴 이름이 굴러가다 멈추는 연출 후 실제 데이터 반영
+function revealAssignment(cells){
+  return new Promise(resolve=>{
+    if(!cells.length){ resolve(); return; }
+    const pool = shuffleArr(cells.map(c=>c.name).filter(Boolean));
+    const poolOrEmpty = pool.length ? pool : ['???'];
+    const remain = new Map();
+    cells.forEach(c=> remain.set(c.item.id, (remain.get(c.item.id)||0)+1));
+    const stagger = Math.max(16, Math.min(65, 1700/Math.max(1,cells.length)));
+    let doneCount=0;
+    const finishItem = item=>{
+      const left=(remain.get(item.id)||1)-1; remain.set(item.id,left);
+      if(left<=0) rebuild(item);
+    };
+    cells.forEach((c,i)=>{
+      const chairEl = chairElOf(c.item, c.idx);
+      if(!chairEl){
+        setSeatRecord(c.item,c.idx,c.name,c.rec||null); setSeatLeaderFlag(c.item,c.idx,!!c.leader);
+        finishItem(c.item); doneCount++; if(doneCount===cells.length) resolve();
+        return;
+      }
+      const rect=chairEl.getBoundingClientRect();
+      const chip=document.createElement('div');
+      chip.className='roll-chip spin'+(c.leader?' leader':'');
+      chip.style.left=(rect.left+rect.width/2)+'px';
+      chip.style.top=(rect.top+rect.height/2)+'px';
+      chip.textContent=poolOrEmpty[Math.floor(Math.random()*poolOrEmpty.length)]||'';
+      document.body.appendChild(chip);
+      const startAt=i*stagger;
+      const spinDur=480+Math.random()*260;
+      let spinTimer=null;
+      const startTimer=setTimeout(()=>{
+        spinTimer=setInterval(()=>{ chip.textContent=poolOrEmpty[Math.floor(Math.random()*poolOrEmpty.length)]; }, 44);
+      }, startAt);
+      setTimeout(()=>{
+        clearInterval(spinTimer); clearTimeout(startTimer);
+        chip.classList.remove('spin'); chip.classList.add('locked');
+        chip.textContent=(c.leader?'👑 ':'')+(c.name || '');
+        setSeatRecord(c.item, c.idx, c.name, c.rec||null);
+        setSeatLeaderFlag(c.item, c.idx, !!c.leader);
+        setTimeout(()=>{
+          chip.remove(); finishItem(c.item); doneCount++;
+          if(doneCount===cells.length) resolve();
+        }, 170);
+      }, startAt+spinDur);
     });
-  } else {
-    let names=flat.slice();
-    if(mode==='random') shuffleArr(names);
-    totalNames=names.length;
-    allRefs.forEach((r,i)=>{ const nm=names[i]||''; setSeatRecord(r.item,r.idx,nm,null); if(nm) assigned++; });
-  }
-  units.forEach(u=> u.items.forEach(it=> rebuild(it) ));
-  enableRosterTable();
-  if(totalNames>assigned) alert('자리('+totalSeats+'석)보다 인원('+totalNames+'명)이 많아 '+(totalNames-assigned)+'명은 배정되지 않았습니다.');
+  });
 }
-function parseRosterFlat(){ return document.getElementById('rosterNames').value.split(/[\n\r\t,]+/).map(s=>s.trim()).filter(Boolean); }
-function parseRosterCols(){
-  const raw=document.getElementById('rosterNames').value.replace(/\r/g,'');
-  const rows=raw.split('\n').map(r=>r.split('\t'));
-  let maxCols=0; rows.forEach(r=>{ maxCols=Math.max(maxCols,r.length); });
-  const cols=[];
-  for(let c=0;c<maxCols;c++){ const col=[]; rows.forEach(r=>{ const v=(r[c]||'').trim(); if(v) col.push(v); }); if(col.length) cols.push(col); }
-  return cols;
+// 학교버전 전용: 이름들이 화면에 둥실둥실 떠다니다가 자기 자리로 날아가서 착석하는 연출
+function revealAssignmentFloat(cells){
+  return new Promise(resolve=>{
+    if(!cells.length){ resolve(); return; }
+    const canvasRect = canvas.getBoundingClientRect();
+    const remain = new Map();
+    cells.forEach(c=> remain.set(c.item.id, (remain.get(c.item.id)||0)+1));
+    let doneCount=0;
+    const finishItem = item=>{
+      const left=(remain.get(item.id)||1)-1; remain.set(item.id,left);
+      if(left<=0) rebuild(item);
+    };
+    const stagger = Math.max(24, Math.min(100, 2400/Math.max(1,cells.length)));
+    const pad=34;
+    cells.forEach((c,i)=>{
+      const chairEl = chairElOf(c.item, c.idx);
+      if(!chairEl){
+        setSeatRecord(c.item,c.idx,c.name,c.rec||null); setSeatLeaderFlag(c.item,c.idx,!!c.leader);
+        finishItem(c.item); doneCount++; if(doneCount===cells.length) resolve();
+        return;
+      }
+      const rect=chairEl.getBoundingClientRect();
+      const startX = canvasRect.left + pad + Math.random()*Math.max(10,(canvasRect.width-pad*2));
+      const startY = canvasRect.top + pad + Math.random()*Math.max(10,(canvasRect.height-pad*2));
+      const chip=document.createElement('div');
+      chip.className='roll-chip floaty'+(c.leader?' leader':'');
+      chip.style.left=startX+'px'; chip.style.top=startY+'px';
+      chip.style.setProperty('--fx', Math.round(Math.random()*18-9)+'px');
+      chip.style.setProperty('--fy', Math.round(Math.random()*18-9)+'px');
+      chip.textContent=(c.leader?'👑 ':'')+(c.name||'');
+      document.body.appendChild(chip);
+      const floatStart=i*stagger;
+      const floatDur=650+Math.random()*450;
+      const flyDur=520;
+      setTimeout(()=>{
+        // 잠시 뒤 자기 자리를 향해 날아감
+        chip.classList.remove('floaty'); chip.classList.add('flying');
+        chip.style.left=(rect.left+rect.width/2)+'px';
+        chip.style.top=(rect.top+rect.height/2)+'px';
+        setTimeout(()=>{
+          chip.classList.remove('flying'); chip.classList.add('locked');
+          setSeatRecord(c.item, c.idx, c.name, c.rec||null);
+          setSeatLeaderFlag(c.item, c.idx, !!c.leader);
+          setTimeout(()=>{
+            chip.remove(); finishItem(c.item); doneCount++;
+            if(doneCount===cells.length) resolve();
+          }, 160);
+        }, flyDur);
+      }, floatStart+floatDur);
+    });
+  });
 }
-let importedRoster=null;   // 엑셀로 불러온 명단 {records, nameCol}
+
+let importedRoster=null;   // 엑셀로 불러온 명단 {records, nameCol, genderCol}
 function doAssign(mode){    // mode: 'random' | 'sequential'
+  if(assigningInProgress) return;
+  const units=allUnitsOrdered();
+  if(!units.length){ alert('배정할 책상/테이블이 없습니다. 먼저 자동배치로 모둠 자리를 만들어 주세요.'); return; }
+
+  let records, nameCol, genderCol;
   if(importedRoster && importedRoster.records.length){
-    const recs = mode==='random' ? shuffleArr(importedRoster.records.slice()) : importedRoster.records.slice();
-    assignFromRecords(recs, importedRoster.nameCol);
+    records=importedRoster.records; nameCol=importedRoster.nameCol; genderCol=importedRoster.genderCol;
   } else {
-    assignRoster(mode);
+    const parsed=parseRosterFlatWithGender();
+    records=parsed.records; nameCol=0; genderCol=parsed.genderCol;
   }
+  if(!records.length){ alert('명단을 먼저 입력하거나 엑셀을 불러와 주세요.'); return; }
+
+  const genderMode=(document.getElementById('rosterGenderMode')||{}).value || 'basic';
+  if(genderMode!=='basic' && genderCol==null){
+    alert('성별 열을 찾을 수 없어 자유배정으로 진행합니다.\n(엑셀 "성별" 열에 남/여를 채워 불러오면 혼성·동성 배정을 쓸 수 있어요)');
+  }
+  const ordered=orderRecordsByGender(records, (genderMode!=='basic')?genderCol:null, genderMode, mode==='random');
+
+  const refs=[]; units.forEach(u=> unitSeatRefs(u).forEach(r=>refs.push(r)));
+  const cells=ordered.slice(0, refs.length).map((rec,i)=>({
+    item:refs[i].item, idx:refs[i].idx,
+    name:String(rec[nameCol]==null?'':rec[nameCol]).trim(),
+    rec: Array.isArray(rec) ? rec : null,
+    leader:false
+  }));
+
+  pushHistory();
+  units.forEach(u=> u.items.forEach(it=>{ clearSeats(it); rebuild(it); }));
+  setAssignUIBusy(true);
+  const reveal = appMode==='school' ? revealAssignmentFloat : revealAssignment;
+  reveal(cells).then(()=>{
+    setAssignUIBusy(false);
+    enableRosterTable(); refreshRoster();
+    if(ordered.length>refs.length){
+      alert('자리('+refs.length+'석)보다 인원('+ordered.length+'명)이 많아 '+(ordered.length-refs.length)+'명은 배정되지 않았습니다.');
+    }
+  });
 }
 document.getElementById('rosterAssign').addEventListener('click', ()=> doAssign('random'));
 document.getElementById('rosterAssignSeq').addEventListener('click', ()=> doAssign('sequential'));
 document.getElementById('rosterClear').addEventListener('click', ()=>{
+  if(assigningInProgress) return;
   const units=allUnits();
   if(!units.length) return;
   pushHistory();
   units.forEach(u=> u.items.forEach(it=>{ clearSeats(it); rebuild(it); }));
+  refreshRoster();
 });
 
 /* ---------- 엑셀 명단 불러오기 / 양식 다운로드 ---------- */
-function assignFromRecords(records, nameCol){
-  const units=allUnitsOrdered();   // 1모둠부터 순서대로
-  if(!units.length){ alert('먼저 자동배치로 모둠 자리를 만들어 주세요.'); return; }
-  const refs=[]; units.forEach(u=> unitSeatRefs(u).forEach(r=>refs.push(r)));
-  pushHistory();
-  units.forEach(u=> u.items.forEach(it=> clearSeats(it) ));
-  let assigned=0;
-  records.forEach((rec,i)=>{
-    if(i>=refs.length) return;
-    const r=refs[i];
-    const name=String(rec[nameCol]==null?'':rec[nameCol]).trim();
-    setSeatRecord(r.item, r.idx, name, rec);
-    if(name) assigned++;
-  });
-  units.forEach(u=> u.items.forEach(it=> rebuild(it) ));
-  enableRosterTable();
-  if(records.length>refs.length) alert('자리('+refs.length+'석)보다 인원('+records.length+'명)이 많아 '+(records.length-refs.length)+'명은 배정되지 않았습니다.');
-}
 function importExcelRoster(file){
   if(typeof XLSX==='undefined'){ alert('엑셀 도구를 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.'); return; }
   const reader=new FileReader();
@@ -2358,35 +2572,39 @@ function importExcelRoster(file){
       if(!rows.length){ alert('엑셀에 데이터가 없습니다.'); return; }
       const header=rows[0].map(h=>String(h==null?'':h).trim());
       let nameCol=header.findIndex(h=>h==='이름'); if(nameCol<0) nameCol=Math.min(2, Math.max(0,header.length-1));
-      // 헤더 제외, 2번 열(인덱스>=1)부터 값이 있는 행만 (#7)
+      let genderCol=header.findIndex(h=>h==='성별'||/성별/.test(h)); if(genderCol<0) genderCol=null;
+      // 헤더 제외, 2번 열(인덱스>=1)부터 값이 있는 행만
       const dataRows=rows.slice(1).filter(r=> r.some((c,ci)=> ci>=1 && String(c==null?'':c).trim()!==''));
       if(!dataRows.length){ alert('엑셀에 입력된 명단이 없습니다. (헤더 아래 행에 소속·이름 등을 입력해 주세요)'); return; }
       if(header.length) rosterHeader=header;
       rosterNameCol=nameCol;
-      importedRoster={records:dataRows, nameCol};
-      assignFromRecords(dataRows, nameCol);
+      importedRoster={records:dataRows, nameCol, genderCol};
       const info=document.getElementById('rosterFileInfo');
-      if(info) info.textContent = file.name+' · '+dataRows.length+'명 불러옴 · 모둠순/랜덤 배정 버튼으로 다시 배치 가능';
+      if(info) info.textContent = file.name+' · '+dataRows.length+'명 불러옴'+(genderCol!=null?' · 성별 열 인식됨 (혼성/동성 배정 가능)':'')+' · 아래 🎲 버튼으로 자리 배정';
+      const gh=document.getElementById('rosterGenderHint');
+      if(gh) gh.textContent = genderCol!=null ? '성별 열이 인식되어 혼성·동성 배정을 사용할 수 있어요.' : '엑셀 "성별" 열을 채워 불러오면 혼성·동성 배정을 쓸 수 있어요.';
+      doAssign('random');
     }catch(err){ console.error(err); alert('엑셀 파일을 읽지 못했습니다. 양식(.xlsx)을 확인해 주세요.'); }
   };
   reader.readAsArrayBuffer(file);
 }
 function downloadTemplate(){
   if(typeof XLSX==='undefined'){ alert('엑셀 도구를 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.'); return; }
-  const header=['번호','소속','이름','과목','항목2','항목3','항목4','항목5','항목6'];
+  const header=['번호','소속','이름','성별','과목','항목2','항목3','항목4','항목5'];
   const sample=[
-    [1,'서울○○초등학교','김도윤','과학','','','','',''],
-    [2,'인천○○중학교','이서아','기술가정','','','','',''],
-    [3,'○○고등학교','박하준','특수','','','','','']
+    [1,'서울○○초등학교','김도윤','남','과학','','','',''],
+    [2,'인천○○중학교','이서아','여','기술가정','','','',''],
+    [3,'○○고등학교','박하준','남','특수','','','','']
   ];
   const ws=XLSX.utils.aoa_to_sheet([header,...sample]);
-  ws['!cols']=header.map((h,i)=>({wch: i===0?6 : (i===1?22 : 12)}));
+  ws['!cols']=header.map((h,i)=>({wch: i===0?6 : (i===1?22 : (i===3?8:12))}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'명단');
   XLSX.writeFile(wb,'모둠_명단_양식.xlsx');
 }
 document.getElementById('xlsxTemplate').addEventListener('click', downloadTemplate);
 document.getElementById('xlsxImport').addEventListener('click', ()=> document.getElementById('xlsxFile').click());
 document.getElementById('xlsxFile').addEventListener('change', e=>{ const f=e.target.files[0]; if(f) importExcelRoster(f); e.target.value=''; });
+
 
 /* ---------- Multi-select alignment ---------- */
 function alignSelected(type){
