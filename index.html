@@ -763,9 +763,11 @@
         </label>
         <div class="gap-hint" id="rosterGenderHint">엑셀 "성별" 열을 채워 불러오면 혼성·동성 배정을 쓸 수 있어요.</div>
         <div class="auto-row">
+          <button class="btn auto-go" id="rosterAssignSeq" style="flex:1">🎲 모둠순 추첨</button>
+          <button class="btn primary auto-go" id="rosterAssign" style="flex:1">🎲 랜덤 추첨</button>
+        </div>
+        <div class="auto-row" style="margin-top:6px">
           <button class="btn auto-go" id="rosterClear" style="flex:1">지우기</button>
-          <button class="btn auto-go" id="rosterAssignSeq" style="flex:1.4">🎲 모둠순 추첨</button>
-          <button class="btn primary auto-go" id="rosterAssign" style="flex:1.4">🎲 랜덤 추첨</button>
         </div>
         <details style="margin-top:4px"><summary style="font-size:11px;color:var(--muted);cursor:pointer;font-weight:700">직접 입력 (텍스트 명단)</summary>
         <textarea id="rosterNames" placeholder="이름을 한 줄에 하나씩 붙여넣기&#10;(성별도 함께: 김철수,남)" style="margin-top:6px"></textarea>
