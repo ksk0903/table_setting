@@ -282,7 +282,7 @@
   .type-podium .shape{background:#5a677a;border-color:#47566a;}
   .type-podium .shape-label{color:#fff;background:transparent;font-size:10px;}
   /* screen / whiteboard */
-  .type-screen .shape{background:#222c3a;border-color:#222c3a;}
+  .type-screen .shape{background:#fbfbf9;border-color:#c7cdd6;}
   .type-screen .shape-label{color:#fff;background:transparent;font-size:10px;letter-spacing:1px;}
   .type-whiteboard .shape{background:#fff;border-color:#9aa6b6;border-width:3px;}
   .type-whiteboard .shape-label{font-size:10px;}
@@ -306,6 +306,10 @@
   .type-plant .shape-label{font-size:9px;background:transparent;}
   /* banner */
   .type-banner .shape{background:linear-gradient(180deg,#FF8A5B,#F2643A);border-color:#d8501f;}
+  /* 동선 화살표 */
+  .type-arrow .shape{background:transparent;border:none;box-shadow:none;}
+  .type-arrow:hover .shape,.type-arrow.selected .shape{box-shadow:none;}
+  .type-arrow .arrow-ill{width:100%;height:100%;overflow:visible;}
   .type-banner .shape-label{color:#fff;background:transparent;font-size:9px;writing-mode:vertical-rl;letter-spacing:2px;}
   /* text memo */
   .type-text .shape{background:transparent;border:1.5px dashed transparent;}
@@ -320,10 +324,17 @@
   .h-ne{right:-6px;top:-6px;cursor:nesw-resize;}
   .h-sw{left:-6px;bottom:-6px;cursor:nesw-resize;}
   .h-se{right:-6px;bottom:-6px;cursor:nwse-resize;}
-  .rotate-handle{position:absolute;left:50%;top:-32px;width:22px;height:22px;margin-left:-11px;border-radius:50%;
+  /* 가로/세로 면 중앙 핸들: 한쪽 방향만 독립적으로 조정 (모서리는 비율 유지, 면은 개별 조정) */
+  .handle.h-n,.handle.h-s{width:16px;height:9px;border-radius:4px;left:50%;margin-left:-8px;}
+  .handle.h-e,.handle.h-w{width:9px;height:16px;border-radius:4px;top:50%;margin-top:-8px;}
+  .h-n{top:-5px;cursor:ns-resize;}
+  .h-s{bottom:-5px;cursor:ns-resize;}
+  .h-e{right:-5px;cursor:ew-resize;}
+  .h-w{left:-5px;cursor:ew-resize;}
+  .rotate-handle{position:absolute;left:50%;top:auto;bottom:-32px;width:22px;height:22px;margin-left:-11px;border-radius:50%;
     background:#fff;border:1.6px solid var(--select);display:none;align-items:center;justify-content:center;
     cursor:grab;z-index:7;box-shadow:0 2px 5px rgba(0,0,0,.22);}
-  .rotate-handle::before{content:"";position:absolute;top:21px;left:50%;width:1.5px;height:11px;background:var(--select);transform:translateX(-50%);}
+  .rotate-handle::before{content:"";position:absolute;top:auto;bottom:21px;left:50%;width:1.5px;height:11px;background:var(--select);transform:translateX(-50%);}
   .rotate-handle svg{width:13px;height:13px;color:var(--select);pointer-events:none;}
   .item.selected.solo .rotate-handle{display:flex;}
   .item.rotating .rotate-handle{cursor:grabbing;}
@@ -335,12 +346,16 @@
   .angle-tag{position:absolute;transform:translate(-50%,-100%);background:var(--select);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);}
 
   /* ===== Room outline (강의장 윤곽) ===== */
-  .item.type-room{z-index:1;pointer-events:none;}
-  .item.type-room.selected{z-index:3;}
-  .item.type-room .handle,.item.type-room .rotate-handle,.item.type-room .room-tab,.item.type-room .room-size,.item.type-room .room-edge{pointer-events:auto;}
+  .item.type-room,.item.type-divider{z-index:1;pointer-events:none;}
+  .item.type-room.selected,.item.type-divider.selected{z-index:3;}
+  .item.type-room .handle,.item.type-room .rotate-handle,.item.type-room .room-tab,.item.type-room .room-size,.item.type-room .room-edge,
+  .item.type-divider .handle,.item.type-divider .rotate-handle,.item.type-divider .room-edge{pointer-events:auto;}
   .room-shape{position:absolute;inset:0;background:transparent;border:2px solid #5b6675;border-radius:4px;}
   .item.type-room.selected .room-shape{border-color:var(--select);}
   .item.type-room::before{border-color:#9aa6b6;}
+  /* 공간분리: 자유롭게 크기·색상 조정 가능한 사각 테두리 */
+  .divider-shape{position:absolute;inset:0;background:transparent;border:2.5px dashed #8a94a6;border-radius:4px;}
+  .item.type-divider.selected .divider-shape{box-shadow:0 0 0 1.5px var(--select);}
   /* 테두리(윤곽선)를 클릭하면 선택·이동되도록 하는 가장자리 히트 영역 (안쪽은 통과) */
   .room-edge{position:absolute;pointer-events:auto;cursor:move;z-index:2;}
   .re-t{top:0;left:0;right:0;height:11px;}
@@ -383,13 +398,31 @@
   .text-toolbar .tt-color input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0;}
   .capturing .text-toolbar{display:none!important;}
 
+  /* 동선 화살표 툴바 (모양 전환 + 두께/색상/곡률/꺾임) */
+  .arrow-toolbar{position:absolute;transform:translate(-50%,-100%);display:none;flex-wrap:wrap;align-items:center;
+    gap:2px;justify-content:center;max-width:260px;background:#fff;border:1px solid var(--line-strong);
+    border-radius:9px;padding:4px 5px;z-index:21;box-shadow:0 3px 10px rgba(0,0,0,.15);}
+  .arrow-toolbar button{font-family:inherit;font-weight:700;color:var(--ink);background:#fff;border:1px solid transparent;
+    cursor:pointer;border-radius:6px;min-width:26px;height:24px;font-size:12px;padding:0 5px;}
+  .arrow-toolbar button.on{background:var(--accent-tint);border-color:var(--accent-soft);color:var(--accent-dark);}
+  .arrow-toolbar button:hover{background:#FFF3E2;color:var(--accent);}
+  .arrow-toolbar .at-val{font-size:11px;font-weight:700;color:var(--muted);min-width:26px;text-align:center;}
+  .arrow-toolbar .at-sep{width:1px;height:16px;background:var(--line-strong);margin:0 2px;}
+  .arrow-toolbar .at-color{position:relative;display:inline-flex;align-items:center;cursor:pointer;}
+  .arrow-toolbar .at-swatch{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line-strong);display:block;}
+  .arrow-toolbar .at-color input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0;}
+  .capturing .arrow-toolbar{display:none!important;}
+  body.dark .arrow-toolbar{background:#1F2733;border-color:#37424f;}
+  body.dark .arrow-toolbar button{background:#1F2733;color:#EAF0F8;}
+  body.dark .arrow-toolbar button:hover{background:#26344a;color:#fff;}
+
   /* capturing: hide UI chrome from export */
   .capturing .item::before{display:none!important;}
   .capturing .item .shape{box-shadow:none!important;}
   .capturing .handle{display:none!important;}
   .capturing .rotate-handle,.capturing #gapLayer{display:none!important;}
   .capturing .empty-state{display:none!important;}
-  .capturing .guide,.capturing .text-toolbar,.capturing .room-tab,.capturing .angle-tag{display:none!important;}
+  .capturing .guide,.capturing .text-toolbar,.capturing .arrow-toolbar,.capturing .divider-toolbar,.capturing .room-tab,.capturing .angle-tag{display:none!important;}
 
   /* ===== Footer help ===== */
   .footer{
@@ -864,7 +897,7 @@ const ICON = {
   chair:  '<svg viewBox="0 0 30 24"><rect x="10" y="6" width="10" height="12" rx="3" fill="#9DA8B8" stroke="#7C889A" stroke-width="1.5"/></svg>',
   stage:  '<svg viewBox="0 0 30 24"><rect x="3" y="6" width="24" height="12" rx="2" fill="#3E4A5C"/><text x="15" y="15" font-size="7" fill="#fff" text-anchor="middle" font-weight="700">무대</text></svg>',
   podium: '<svg viewBox="0 0 30 24"><rect x="11" y="5" width="8" height="14" rx="1.5" fill="#5a677a"/></svg>',
-  screen: '<svg viewBox="0 0 30 24"><rect x="4" y="3" width="22" height="13" rx="1.5" fill="#2b3340"/><rect x="6" y="5" width="18" height="9" rx="1" fill="#eef3f8"/><rect x="14" y="16" width="2" height="4" fill="#2b3340"/><rect x="10" y="20" width="10" height="2" rx="1" fill="#2b3340"/></svg>',
+  screen: '<svg viewBox="0 0 30 24"><rect x="4" y="2" width="22" height="3.4" rx="1" fill="#3a4456"/><rect x="6" y="5.4" width="18" height="13" fill="#fbfbf9" stroke="#c7cdd6" stroke-width="1"/><rect x="11" y="19.2" width="8" height="2.2" rx="1.1" fill="#3a4456"/></svg>',
   white:  '<svg viewBox="0 0 30 24"><rect x="4" y="6" width="22" height="10" rx="1.5" fill="#fff" stroke="#9aa6b6" stroke-width="2"/></svg>',
   head:   '<svg viewBox="0 0 30 24"><rect x="4" y="8" width="22" height="8" rx="2" fill="#E4CFA6" stroke="#C29B57" stroke-width="2"/></svg>',
   reg:    '<svg viewBox="0 0 30 24"><rect x="4" y="8" width="22" height="9" rx="2" fill="#D9E8DA" stroke="#A7C6AB" stroke-width="1.5"/></svg>',
@@ -885,6 +918,8 @@ const ICON = {
   locker: '<svg viewBox="0 0 30 24"><rect x="6" y="3" width="18" height="18" rx="1.5" fill="#aebccd" stroke="#7f8ea1" stroke-width="1.5"/><path d="M15 3v18M6 9h18M6 15h18" stroke="#7f8ea1" stroke-width="1"/></svg>',
   cork:   '<svg viewBox="0 0 30 24"><rect x="4" y="5" width="22" height="14" rx="1.5" fill="#d8b483" stroke="#b58c52" stroke-width="1.5"/><circle cx="10" cy="10" r="1.3" fill="#e0533c"/><circle cx="20" cy="14" r="1.3" fill="#2f6bff"/></svg>',
   trash:  '<svg viewBox="0 0 30 24"><rect x="8" y="4.5" width="14" height="3" rx="1.5" fill="#9DA8B8" stroke="#7f8ea1" stroke-width="0.9"/><rect x="12.6" y="1.8" width="4.8" height="2.5" rx="1.2" fill="#9DA8B8"/><path d="M9.5 7.5 h11 l-1 12.8 a1.7 1.7 0 0 1 -1.7 1.6 h-4.6 a1.7 1.7 0 0 1 -1.7 -1.6 Z" fill="#aebccd" stroke="#7f8ea1" stroke-width="1.1"/><path d="M13 10.8 v8.4 M15 10.8 v8.4 M17 10.8 v8.4" stroke="#7f8ea1" stroke-width="0.95" opacity="0.65"/></svg>',
+  arrow:  '<svg viewBox="0 0 30 24"><line x1="3" y1="12" x2="20" y2="12" stroke="#F18D01" stroke-width="3" stroke-linecap="round"/><path d="M17 6 L27 12 L17 18 Z" fill="#F18D01"/></svg>',
+  divider:'<svg viewBox="0 0 30 24"><rect x="3" y="3" width="24" height="18" rx="2" fill="none" stroke="#8a94a6" stroke-width="2.2" stroke-dasharray="4 3"/></svg>',
 };
 
 const CATALOG = [
@@ -902,6 +937,7 @@ const CATALOG = [
     { type:'head-table', name:'헤드테이블', icon:'head',   w:200, h:52 },
     { type:'podium',     name:'연단(단상)', icon:'podium', w:52,  h:40 },
     { type:'screen',     name:'스크린',     icon:'screen', w:150, h:96 },
+    { type:'monitor',    name:'모니터',     icon:'monitor',w:100, h:64 },
     { type:'whiteboard', name:'화이트보드', icon:'white',  w:120, h:16 },
     { type:'projector',  name:'빔프로젝터', icon:'proj',   w:60,  h:44 },
     { type:'speaker',    name:'스피커',     icon:'speaker',w:42,  h:62 },
@@ -913,6 +949,8 @@ const CATALOG = [
     { type:'pillar',       name:'기둥',         icon:'pillar', w:40,  h:40 },
     { type:'plant',        name:'화분·식물',    icon:'plant',  w:34,  h:34 },
     { type:'banner',       name:'현수막·배너',  icon:'banner', w:32,  h:96 },
+    { type:'arrow',        name:'동선 화살표',  icon:'arrow',  w:160, h:28 },
+    { type:'divider',      name:'공간분리',     icon:'divider',w:220, h:150 },
     { type:'text',         name:'텍스트 메모',  icon:'text',   w:96,  h:32 },
   ]},
 ];
@@ -937,6 +975,8 @@ const CATALOG_SCHOOL = [
     { type:'door',  name:'출입문',     icon:'door',  w:66, h:22 },
     { type:'trash', name:'쓰레기통',   icon:'trash', w:30, h:34 },
     { type:'plant', name:'화분·식물',  icon:'plant', w:34, h:34 },
+    { type:'arrow', name:'동선 화살표', icon:'arrow', w:160, h:28 },
+    { type:'divider', name:'공간분리', icon:'divider', w:220, h:150 },
     { type:'text',  name:'텍스트 메모', icon:'text',  w:96, h:32 },
   ]},
 ];
@@ -1079,6 +1119,7 @@ function createItem(def, x, y){
   if(def.seats!==undefined) item.seats = def.seats;
   if(def.seatSide) item.seatSide = def.seatSide;
   if(def.type==='text'){ item.text = '텍스트'; item.fontSize = 14; }
+  if(def.type==='arrow'){ item.thickness = 4; item.color = '#F18D01'; }
   if(def.type==='room'){ item.roomLabel = (appMode==='school' ? '교실 크기 / 분반명' : '강의장 크기 / 분반명'); }
   if(def.type==='student-desk'){ item.studentName = ''; }
   if(item.type==='group-desk' || item.type==='round-table' || item.type==='rect-table' || item.type==='classroom-desk'){
@@ -1116,16 +1157,21 @@ function innerHTML(item){
          + `<div class="room-tab">${appMode==='school'?'교실':'강의장'}</div>`
          + `<div class="room-size" title="더블클릭하여 강의장 크기·분반명 입력">${escapeHtml(item.roomLabel||'크기 입력')}</div>`;
   }
+  if(item.type==='divider'){
+    return `<div class="shape divider-shape"></div>`
+         + `<div class="room-edge re-t"></div><div class="room-edge re-b"></div><div class="room-edge re-l"></div><div class="room-edge re-r"></div>`;
+  }
   if(item.type==='chair'){
     return `<div class="shape"></div>`;
   }
   if(item.type==='screen'){
     return `<div class="shape"><svg class="ill" viewBox="0 0 150 96" preserveAspectRatio="none">`
-      +`<rect x="5" y="5" width="140" height="68" rx="3" fill="#2b3340"/>`
-      +`<rect x="11" y="11" width="128" height="56" rx="2" fill="#eef3f8"/>`
-      +`<path d="M11 67 L62 11 L104 11 L40 67 Z" fill="#ffffff" opacity="0.4"/>`
-      +`<rect x="71" y="73" width="8" height="14" fill="#2b3340"/>`
-      +`<rect x="54" y="86" width="42" height="6" rx="3" fill="#2b3340"/></svg></div>`;
+      +`<rect x="4" y="4" width="142" height="10" rx="2" fill="#3a4456"/>`
+      +`<rect x="11" y="14" width="128" height="66" fill="#fbfbf9" stroke="#c7cdd6" stroke-width="1.5"/>`
+      +`<line x1="11" y1="14" x2="11" y2="80" stroke="#d7dde4" stroke-width="1.5"/>`
+      +`<line x1="139" y1="14" x2="139" y2="80" stroke="#d7dde4" stroke-width="1.5"/>`
+      +`<rect x="44" y="80" width="62" height="6" rx="3" fill="#3a4456"/>`
+      +`<rect x="69" y="86" width="12" height="6" rx="2" fill="#3a4456"/></svg></div>`;
   }
   if(item.type==='projector'){
     return `<div class="shape"><svg class="ill" viewBox="0 0 60 44" preserveAspectRatio="none">`
@@ -1156,11 +1202,71 @@ function innerHTML(item){
       +`<path d="M6.5 10 h17 l-1.5 20.5 a2.2 2.2 0 0 1 -2.2 2 h-7.4 a2.2 2.2 0 0 1 -2.2 -2 Z" fill="#aebccd" stroke="#7f8ea1" stroke-width="1.2"/>`
       +`<path d="M12 14 v15 M15 14 v15 M18 14 v15" stroke="#7f8ea1" stroke-width="1.1" opacity="0.65"/></svg></div>`;
   }
+  if(item.type==='arrow'){
+    return `<div class="shape arrow-shape">${arrowSVG(item)}</div>`;
+  }
   return `<div class="shape"><span class="shape-label">${escapeHtml(item.name)}</span></div>`;
+}
+// 동선 화살표: viewBox를 실제 w/h와 1:1로 맞춰 두께(px)가 크기 조절과 무관하게 정확히 유지되도록 함
+function arrowSVG(item){
+  const w=Math.max(4,item.w), h=Math.max(4,item.h);
+  const th=Math.max(1, Math.min(item.thickness||4, Math.max(2,h-2)));
+  const color=item.color || '#F18D01';
+  const style=item.arrowStyle || 'straight';
+  const headLen=Math.min(w*0.42, Math.max(11, th*3.2));
+  const headWMax=Math.max(6, h-2);
+
+  function headPath(px,py,angle,hw){
+    const spread=0.40;
+    const a1=angle+Math.PI-spread, a2=angle+Math.PI+spread;
+    const x1=px+headLen*Math.cos(a1), y1=py+headLen*Math.sin(a1);
+    const x2=px+headLen*Math.cos(a2), y2=py+headLen*Math.sin(a2);
+    return `<path d="M ${px} ${py} L ${x1} ${y1} L ${x2} ${y2} Z" fill="${color}"/>`;
+  }
+
+  if(style==='curve'){
+    const cy=h/2;
+    const maxCurv=Math.max(2, h/2-2);
+    let curv=item.curvature==null?Math.round(maxCurv*0.7):item.curvature;
+    curv=Math.max(-maxCurv, Math.min(maxCurv, curv));
+    const sx=2, sy=cy, ex=w-2, ey=cy, cx=w/2, ccy=cy-curv;
+    const dx=ex-cx, dy=ey-ccy, len=Math.hypot(dx,dy)||1;
+    const angle=Math.atan2(dy,dx);
+    const shaftEx=ex-Math.cos(angle)*headLen*0.7, shaftEy=ey-Math.sin(angle)*headLen*0.7;
+    return `<svg class="ill arrow-ill" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
+      +`<path d="M ${sx} ${sy} Q ${cx} ${ccy} ${shaftEx.toFixed(1)} ${shaftEy.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${th}" stroke-linecap="round"/>`
+      +headPath(ex,ey,angle,headWMax)
+      +`</svg>`;
+  }
+  if(style==='elbow'){
+    const dir = item.elbowDir==='up' ? 'up' : 'down';
+    const ratio = Math.max(0.12, Math.min(0.88, item.elbowRatio==null?0.62:item.elbowRatio));
+    const turnX = w*ratio;
+    const sy=h/2;
+    const ey = dir==='down' ? h-2 : 2;
+    const vDir = dir==='down' ? 1 : -1;
+    const shaftEy = ey - vDir*headLen*0.7;
+    const angle = vDir>0 ? Math.PI/2 : -Math.PI/2;
+    return `<svg class="ill arrow-ill" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
+      +`<path d="M 2 ${sy} L ${turnX.toFixed(1)} ${sy} L ${turnX.toFixed(1)} ${shaftEy.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${th}" stroke-linecap="round" stroke-linejoin="round"/>`
+      +headPath(turnX,ey,angle,headWMax)
+      +`</svg>`;
+  }
+  // straight (기본)
+  const cy=h/2;
+  const shaftEnd=Math.max(2, w-headLen);
+  return `<svg class="ill arrow-ill" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
+    +`<line x1="2" y1="${cy}" x2="${shaftEnd}" y2="${cy}" stroke="${color}" stroke-width="${th}" stroke-linecap="round"/>`
+    +headPath(w-2,cy,0,headWMax)
+    +`</svg>`;
+}
+function rebuildArrow(item){
+  const s=item.el && item.el.querySelector('.arrow-shape');
+  if(s) s.innerHTML = arrowSVG(item);
 }
 
 function addHandles(el){
-  ['nw','ne','sw','se'].forEach(c=>{
+  ['nw','ne','sw','se','n','s','e','w'].forEach(c=>{
     const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; el.appendChild(h);
   });
   const rh=document.createElement('div'); rh.className='rotate-handle';
@@ -1178,7 +1284,15 @@ function buildEl(item){
   canvas.appendChild(el);
   attachItemHandlers(item);
   if(hasChairs(item)) refreshTable(item);
+  if(item.type==='divider') applyDividerStyle(item);
   fitContent(item);
+}
+function applyDividerStyle(item){
+  const s = item.el && item.el.querySelector('.divider-shape');
+  if(!s) return;
+  const col = item.dividerColor || '#8a94a6';
+  s.style.borderColor = col;
+  s.style.borderWidth = Math.max(1, item.dividerThickness||2.5) + 'px';
 }
 
 /* ---------- Chairs ---------- */
@@ -1257,6 +1371,7 @@ function refreshTable(item){
       }
       return `<div class="${cls}" data-seat="${i}" style="left:${p.x}px;top:${p.y}px;width:${cm.size}px;height:${cm.size}px">${inner}</div>`;
     }).join('');
+  applyTableColor(item);
 }
 
 /* ---------- Auto font scaling (label/badge fit within element) ---------- */
@@ -1269,13 +1384,17 @@ function fitLabel(item){
   else { fs = Math.min((item.h-6)*0.6, (item.w-10)/(len*0.92)); }
   label.style.fontSize = Math.max(7, Math.min(fs, 46)) + 'px';
 }
+function autoBadgeFontSize(item){
+  const cm = chairMetrics(item);
+  return Math.max(10, Math.min(22, Math.round(cm.size*0.95)));
+}
 function fitBadge(item){
   const badge = item.el.querySelector('.seat-badge');
   if(!badge) return;
   const cm = chairMetrics(item);
   const sc = cm.scale;
-  // 이름·모둠명 공통 글자 크기 = 의자 크기 기준 (묶음은 의자 크기가 통일되므로 글자도 통일)
-  const nameFs = Math.max(10, Math.min(22, Math.round(cm.size*0.95)));
+  // 이름·모둠명 공통 글자 크기 = 의자 크기 기준(자동), 수동으로 지정한 크기가 있으면 그 값을 우선 사용
+  const nameFs = item.groupLabelFontSize || autoBadgeFontSize(item);
   if(badge.classList.contains('name-badge')){
     badge.style.fontSize = nameFs + 'px';
   } else {
@@ -1346,7 +1465,10 @@ function updateChrome(){
     const it=getItem([...state.selected][0]);
     if(it) it.el.classList.add('solo');
     if(it && it.type==='text') showTextToolbar(it); else hideTextToolbar();
-  } else hideTextToolbar();
+    if(it && it.type==='arrow') showArrowToolbar(it); else hideArrowToolbar();
+    if(it && hasChairs(it)) showTableToolbar(it); else hideTableToolbar();
+    if(it && it.type==='divider') showDividerToolbar(it); else hideDividerToolbar();
+  } else { hideTextToolbar(); hideArrowToolbar(); hideTableToolbar(); hideDividerToolbar(); }
   const ab=document.getElementById('alignBar');
   if(ab) ab.classList.toggle('show', state.selected.size>=2);
   if(gapCheckOn) renderGapCheck();
@@ -1409,6 +1531,264 @@ function positionTextToolbar(item){
   if(!textToolbar) return;
   textToolbar.style.left=(item.x+item.w/2)+'px';
   textToolbar.style.top=(item.y-12)+'px';
+}
+
+/* ---------- 동선 화살표: 모양(직선/곡선/꺾은선) · 두께 · 색상 툴바 ---------- */
+let arrowToolbar=null, arrowToolbarItem=null;
+function buildArrowToolbar(){
+  arrowToolbar=document.createElement('div');
+  arrowToolbar.className='arrow-toolbar';
+  canvas.appendChild(arrowToolbar);
+}
+function arrowToolbarHTML(item){
+  const style=item.arrowStyle||'straight';
+  let html = `<button data-style="straight" class="${style==='straight'?'on':''}" title="직선">⟶</button>`
+    + `<button data-style="curve" class="${style==='curve'?'on':''}" title="곡선">↝</button>`
+    + `<button data-style="elbow" class="${style==='elbow'?'on':''}" title="꺾은 선(90°)">⌐</button>`
+    + `<span class="at-sep"></span>`
+    + `<button data-d="-1" title="선 얇게">▬−</button><span class="at-val" id="atThickVal">${item.thickness||4}</span><button data-d="1" title="선 굵게">▬+</button>`
+    + `<span class="at-sep"></span>`
+    + `<label class="at-color" title="화살표 색상"><span class="at-swatch" id="atSwatch"></span><input type="color" id="arrowColorInput" value="${item.color||'#F18D01'}"></label>`;
+  if(style==='curve'){
+    html += `<span class="at-sep"></span><button data-curv="-10" title="곡률 줄이기">⌒−</button><span class="at-val" id="atCurvVal">0</span><button data-curv="10" title="곡률 늘리기">⌒+</button>`;
+  } else if(style==='elbow'){
+    html += `<span class="at-sep"></span><button data-elbow="-1" title="꺾이는 위치 왼쪽으로">┐−</button><span class="at-val" id="atElbowVal">50%</span><button data-elbow="1" title="꺾이는 위치 오른쪽으로">┐+</button>`
+      + `<button data-flip="1" title="위/아래 방향 전환">⇅</button>`;
+  }
+  return html;
+}
+function wireArrowToolbar(item){
+  arrowToolbar.querySelectorAll('button[data-style]').forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!arrowToolbarItem) return;
+      pushHistory();
+      arrowToolbarItem.arrowStyle = b.dataset.style;
+      if(b.dataset.style==='curve' && arrowToolbarItem.curvature==null) arrowToolbarItem.curvature = Math.round(Math.max(2,arrowToolbarItem.h/2-2)*0.7);
+      if(b.dataset.style==='elbow' && arrowToolbarItem.elbowRatio==null) arrowToolbarItem.elbowRatio = 0.62;
+      rebuildArrow(arrowToolbarItem);
+      refreshArrowToolbarContent(arrowToolbarItem);
+    });
+  });
+  arrowToolbar.querySelectorAll('button[data-d]').forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!arrowToolbarItem) return;
+      const d=parseInt(b.dataset.d,10);
+      arrowToolbarItem.thickness=Math.max(1, Math.min(40, (arrowToolbarItem.thickness||4)+d));
+      rebuildArrow(arrowToolbarItem);
+      const v=arrowToolbar.querySelector('#atThickVal'); if(v) v.textContent=arrowToolbarItem.thickness;
+      positionArrowToolbar(arrowToolbarItem);
+    });
+  });
+  const curvBtns = arrowToolbar.querySelectorAll('button[data-curv]');
+  curvBtns.forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!arrowToolbarItem) return;
+      const d=parseInt(b.dataset.curv,10);
+      const maxCurv=Math.max(2, arrowToolbarItem.h/2-2);
+      arrowToolbarItem.curvature=Math.max(-maxCurv, Math.min(maxCurv, (arrowToolbarItem.curvature||0)+d));
+      rebuildArrow(arrowToolbarItem);
+      const v=arrowToolbar.querySelector('#atCurvVal'); if(v) v.textContent=arrowToolbarItem.curvature;
+    });
+  });
+  arrowToolbar.querySelectorAll('button[data-elbow]').forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!arrowToolbarItem) return;
+      const d=parseInt(b.dataset.elbow,10)*0.08;
+      arrowToolbarItem.elbowRatio=Math.max(0.12, Math.min(0.88, (arrowToolbarItem.elbowRatio==null?0.62:arrowToolbarItem.elbowRatio)+d));
+      rebuildArrow(arrowToolbarItem);
+      const v=arrowToolbar.querySelector('#atElbowVal'); if(v) v.textContent=Math.round(arrowToolbarItem.elbowRatio*100)+'%';
+    });
+  });
+  const flipBtn = arrowToolbar.querySelector('button[data-flip]');
+  if(flipBtn){
+    flipBtn.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    flipBtn.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!arrowToolbarItem) return;
+      arrowToolbarItem.elbowDir = arrowToolbarItem.elbowDir==='up' ? 'down' : 'up';
+      rebuildArrow(arrowToolbarItem);
+    });
+  }
+  const ci=arrowToolbar.querySelector('#arrowColorInput');
+  ci.addEventListener('mousedown', e=>e.stopPropagation());
+  ci.addEventListener('input', e=>{
+    if(!arrowToolbarItem) return;
+    arrowToolbarItem.color=e.target.value;
+    rebuildArrow(arrowToolbarItem);
+    const sw=arrowToolbar.querySelector('#atSwatch'); if(sw) sw.style.background=e.target.value;
+  });
+  ci.addEventListener('change', ()=> pushHistory());
+}
+function refreshArrowToolbarContent(item){
+  arrowToolbar.innerHTML = arrowToolbarHTML(item);
+  wireArrowToolbar(item);
+  const sw=arrowToolbar.querySelector('#atSwatch'); if(sw) sw.style.background=item.color||'#F18D01';
+  const cv=arrowToolbar.querySelector('#atCurvVal'); if(cv) cv.textContent=item.curvature||0;
+  const ev=arrowToolbar.querySelector('#atElbowVal'); if(ev) ev.textContent=Math.round((item.elbowRatio==null?0.62:item.elbowRatio)*100)+'%';
+  positionArrowToolbar(item);
+}
+function showArrowToolbar(item){
+  if(!arrowToolbar) buildArrowToolbar();
+  arrowToolbarItem=item;
+  refreshArrowToolbarContent(item);
+  arrowToolbar.style.display='flex';
+}
+function hideArrowToolbar(){ if(arrowToolbar){ arrowToolbar.style.display='none'; } arrowToolbarItem=null; }
+function positionArrowToolbar(item){
+  if(!arrowToolbar) return;
+  arrowToolbar.style.left=(item.x+item.w/2)+'px';
+  arrowToolbar.style.top=(item.y-12)+'px';
+}
+
+/* ---------- 공간분리: 테두리 색상 · 두께 툴바 ---------- */
+let dividerToolbar=null, dividerToolbarItem=null;
+function buildDividerToolbar(){
+  dividerToolbar=document.createElement('div');
+  dividerToolbar.className='text-toolbar';
+  dividerToolbar.innerHTML=`<button data-d="-1" title="테두리 얇게">▬−</button><span class="tt-val" id="dtThickVal">2.5</span><button data-d="1" title="테두리 굵게">▬+</button>`
+    +`<span class="tt-sep"></span><label class="tt-color" title="테두리 색상"><span class="tt-swatch" id="dtSwatch"></span><input type="color" id="dividerColorInput" value="#8a94a6"></label>`;
+  dividerToolbar.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!dividerToolbarItem) return;
+      const d=parseInt(b.dataset.d,10);
+      dividerToolbarItem.dividerThickness=Math.max(1, Math.min(16, (dividerToolbarItem.dividerThickness||2.5)+d));
+      applyDividerStyle(dividerToolbarItem);
+      dividerToolbar.querySelector('#dtThickVal').textContent=dividerToolbarItem.dividerThickness;
+      positionDividerToolbar(dividerToolbarItem);
+    });
+  });
+  const ci=dividerToolbar.querySelector('#dividerColorInput');
+  ci.addEventListener('mousedown', e=>e.stopPropagation());
+  ci.addEventListener('input', e=>{
+    if(!dividerToolbarItem) return;
+    dividerToolbarItem.dividerColor=e.target.value;
+    applyDividerStyle(dividerToolbarItem);
+    const sw=document.getElementById('dtSwatch'); if(sw) sw.style.background=e.target.value;
+  });
+  ci.addEventListener('change', ()=> pushHistory());
+  canvas.appendChild(dividerToolbar);
+}
+function showDividerToolbar(item){
+  if(!dividerToolbar) buildDividerToolbar();
+  dividerToolbarItem=item;
+  dividerToolbar.querySelector('#dtThickVal').textContent=item.dividerThickness||2.5;
+  const ci=dividerToolbar.querySelector('#dividerColorInput'), sw=document.getElementById('dtSwatch');
+  const col=item.dividerColor||'#8a94a6';
+  if(ci) ci.value=col; if(sw) sw.style.background=col;
+  dividerToolbar.style.display='flex';
+  positionDividerToolbar(item);
+}
+function hideDividerToolbar(){ if(dividerToolbar){ dividerToolbar.style.display='none'; } dividerToolbarItem=null; }
+function positionDividerToolbar(item){
+  if(!dividerToolbar) return;
+  dividerToolbar.style.left=(item.x+item.w/2)+'px';
+  dividerToolbar.style.top=(item.y-12)+'px';
+}
+
+/* ---------- 테이블 색상 · 모둠명 글자 크기 툴바 ---------- */
+let tableToolbar=null, tableToolbarItem=null;
+function tableShowsNameLabel(item){
+  return (item.type==='student-desk' || item.seats===1) || (labelMode==='name' && (!item.groupId || (item.partIdx||0)===0));
+}
+function buildTableToolbar(){
+  tableToolbar=document.createElement('div');
+  tableToolbar.className='text-toolbar';
+  canvas.appendChild(tableToolbar);
+}
+function tableToolbarHTML(item){
+  let html = `<label class="tt-color" title="테이블 색상"><span class="tt-swatch" id="tcSwatch"></span><input type="color" id="tableColorInput"></label>`
+    + `<button id="tableColorReset" title="색상 초기화" style="font-size:11px;padding:0 6px;">↺</button>`;
+  if(tableShowsNameLabel(item)){
+    html += `<span class="tt-sep"></span><button data-d="-2" title="이름표 글자 작게">A−</button><span class="tt-val" id="tlSizeVal">14</span><button data-d="2" title="이름표 글자 크게">A+</button>`;
+  }
+  return html;
+}
+function setGroupLabelFontSize(item, val){
+  if(item.groupId){ state.items.filter(i=>i.groupId===item.groupId).forEach(i=>{ i.groupLabelFontSize=val; rebuild(i); }); }
+  else { item.groupLabelFontSize=val; rebuild(item); }
+}
+function wireTableToolbar(item){
+  const ci=tableToolbar.querySelector('#tableColorInput');
+  ci.addEventListener('mousedown', e=>e.stopPropagation());
+  ci.addEventListener('input', e=>{
+    if(!tableToolbarItem) return;
+    tableToolbarItem.fillColor=e.target.value;
+    applyTableColor(tableToolbarItem);
+    const sw=document.getElementById('tcSwatch'); if(sw) sw.style.background=e.target.value;
+  });
+  ci.addEventListener('change', ()=> pushHistory());
+  const rb=tableToolbar.querySelector('#tableColorReset');
+  rb.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+  rb.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(!tableToolbarItem) return;
+    pushHistory();
+    delete tableToolbarItem.fillColor;
+    applyTableColor(tableToolbarItem);
+    const defCol=defaultTableColorHex(tableToolbarItem);
+    const sw=document.getElementById('tcSwatch'); if(sw) sw.style.background=defCol;
+    const ci2=document.getElementById('tableColorInput'); if(ci2) ci2.value=defCol;
+  });
+  tableToolbar.querySelectorAll('button[data-d]').forEach(b=>{
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!tableToolbarItem) return;
+      const d=parseInt(b.dataset.d,10);
+      const cur = tableToolbarItem.groupLabelFontSize || autoBadgeFontSize(tableToolbarItem);
+      const val = Math.max(8, Math.min(40, cur+d));
+      setGroupLabelFontSize(tableToolbarItem, val);
+      const lv=tableToolbar.querySelector('#tlSizeVal'); if(lv) lv.textContent=val;
+      positionTableToolbar(tableToolbarItem);
+    });
+  });
+}
+function defaultTableColorHex(item){
+  if(item.type==='classroom-desk') return '#EFE8D6';
+  return '#EAD9BB';
+}
+function applyTableColor(item){
+  const shape=item.el && item.el.querySelector('.table-shape');
+  if(!shape) return;
+  if(item.fillColor){ shape.style.background=item.fillColor; shape.style.borderColor=shadeHex(item.fillColor,-0.22); }
+  else { shape.style.background=''; shape.style.borderColor=''; }
+}
+function shadeHex(hex, pct){
+  hex=(hex||'#EAD9BB').replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const f=parseInt(hex,16), t=pct<0?0:255, p=Math.abs(pct);
+  const R=f>>16, G=(f>>8)&0xFF, B=f&0xFF;
+  const nr=Math.round((t-R)*p)+R, ng=Math.round((t-G)*p)+G, nb=Math.round((t-B)*p)+B;
+  return '#'+(0x1000000+nr*0x10000+ng*0x100+nb).toString(16).slice(1);
+}
+function showTableToolbar(item){
+  if(!tableToolbar) buildTableToolbar();
+  tableToolbarItem=item;
+  tableToolbar.innerHTML = tableToolbarHTML(item);
+  wireTableToolbar(item);
+  const col = item.fillColor || defaultTableColorHex(item);
+  const ci=document.getElementById('tableColorInput'), sw=document.getElementById('tcSwatch');
+  if(ci) ci.value=col; if(sw) sw.style.background=col;
+  const lv=document.getElementById('tlSizeVal');
+  if(lv) lv.textContent = item.groupLabelFontSize || autoBadgeFontSize(item);
+  tableToolbar.style.display='flex';
+  positionTableToolbar(item);
+}
+function hideTableToolbar(){ if(tableToolbar){ tableToolbar.style.display='none'; } tableToolbarItem=null; }
+function positionTableToolbar(item){
+  if(!tableToolbar) return;
+  tableToolbar.style.left=(item.x+item.w/2)+'px';
+  tableToolbar.style.top=(item.y-12)+'px';
 }
 
 /* ---------- Item interaction ---------- */
@@ -1576,20 +1956,21 @@ function renderGapCheck(){
   }
 }
 
-const CORNER_SIGN = { nw:[-1,-1], ne:[1,-1], sw:[-1,1], se:[1,1] };
+const CORNER_SIGN = { nw:[-1,-1], ne:[1,-1], sw:[-1,1], se:[1,1], n:[0,-1], s:[0,1], e:[1,0], w:[-1,0] };
 
 function startResize(item, corner, e){
   pushHistory();
   const cr = canvas.getBoundingClientRect();
   const rot = (item.rot||0)*Math.PI/180, cos=Math.cos(rot), sin=Math.sin(rot);
   const [scx,scy] = CORNER_SIGN[corner];
+  const isEdge = (scx===0 || scy===0);           // n/s/e/w: 가로 또는 세로 한쪽만 독립적으로 조정
   const x0=item.x, y0=item.y, w0=item.w, h0=item.h;
   const C0x=x0+w0/2, C0y=y0+h0/2;
-  // opposite corner stays fixed (anchor), in canvas coords
+  // opposite corner(또는 반대쪽 변) 고정, in canvas coords
   const lax=-scx*w0/2, lay=-scy*h0/2;
   const Ax=C0x+(cos*lax-sin*lay), Ay=C0y+(sin*lax+cos*lay);
-  const keepSquare = item.type==='round-table';
-  const keepAspect = item.type==='bgimage';
+  const keepSquare = item.type==='round-table' && !isEdge;
+  const keepAspect = !isEdge;   // 모서리(코너) 조정 = 항상 가로세로 비율 유지 (배경·윤곽 포함 모든 요소)
   const aspect = h0>0 ? w0/h0 : 1;
   const minW=20, minH=16;
   function mm(ev){
@@ -1597,9 +1978,16 @@ function startResize(item, corner, e){
     const vx=M.x-Ax, vy=M.y-Ay;
     const lx= cos*vx+sin*vy;      // rotate by -rot into local frame
     const ly=-sin*vx+cos*vy;
-    let newW=Math.max(minW, lx*scx), newH=Math.max(minH, ly*scy);
-    if(keepSquare){ const s=Math.max(newW,newH); newW=s; newH=s; }
-    else if(keepAspect){ newH=newW/aspect; if(newH<minH){ newH=minH; newW=newH*aspect; } }
+    let newW, newH;
+    if(scx===0){                 // 위/아래 변: 세로만 독립적으로 조정, 가로 폭은 그대로
+      newW=w0; newH=Math.max(minH, ly*scy);
+    } else if(scy===0){          // 좌/우 변: 가로만 독립적으로 조정, 세로 높이는 그대로
+      newH=h0; newW=Math.max(minW, lx*scx);
+    } else {
+      newW=Math.max(minW, lx*scx); newH=Math.max(minH, ly*scy);
+      if(keepSquare){ const s=Math.max(newW,newH); newW=s; newH=s; }
+      else if(keepAspect){ newH=newW/aspect; if(newH<minH){ newH=minH; newW=newH*aspect; } }
+    }
     const gx=scx*newW/2, gy=scy*newH/2;          // grabbed corner offset from new center, local
     const Cx=Ax+(cos*gx-sin*gy), Cy=Ay+(sin*gx+cos*gy);
     item.w=Math.round(newW); item.h=Math.round(newH);
@@ -1607,6 +1995,7 @@ function startResize(item, corner, e){
     clampToArea(item);
     positionEl(item);
     if(hasChairs(item)) refreshTable(item);
+    if(item.type==='arrow') rebuildArrow(item);
     fitContent(item);
   }
   function mu(){ document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }
@@ -1697,10 +2086,12 @@ function editSeats(item){
 function rebuild(item){
   const wasSelected = state.selected.has(item.id);
   item.el.innerHTML = innerHTML(item);
-  ['nw','ne','sw','se'].forEach(c=>{ const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; item.el.appendChild(h); });
+  ['nw','ne','sw','se','n','s','e','w'].forEach(c=>{ const h=document.createElement('div'); h.className='handle h-'+c; h.dataset.corner=c; item.el.appendChild(h); });
   { const rh=document.createElement('div'); rh.className='rotate-handle'; rh.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3.5V9h-5.5"/></svg>'; item.el.appendChild(rh); }
   attachItemHandlers(item);
   if(hasChairs(item)) refreshTable(item);
+  if(item.type==='arrow') rebuildArrow(item);
+  if(item.type==='divider') applyDividerStyle(item);
   fitContent(item);
   if(wasSelected){ item.el.classList.add('selected'); updateChrome(); }
   refreshRoster();
@@ -1725,8 +2116,10 @@ function addFromCatalog(def){
 /* ---------- Clipboard / delete ---------- */
 function copySel(){
   state.clipboard = [...state.selected].map(id=>{
-    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,seatNames,color,seatRecords,chairSize,partIdx,seatLeader,seatVice}=getItem(id);
-    return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,color,chairSize,partIdx,
+    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,seatNames,color,seatRecords,chairSize,partIdx,seatLeader,seatVice,fillColor,groupLabelFontSize,thickness,
+           dividerColor,dividerThickness,arrowStyle,curvature,elbowRatio,elbowDir}=getItem(id);
+    return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,color,chairSize,partIdx,fillColor,groupLabelFontSize,thickness,
+            dividerColor,dividerThickness,arrowStyle,curvature,elbowRatio,elbowDir,
             seatNames:seatNames?[...seatNames]:undefined, seatRecords:seatRecords?seatRecords.map(r=>r?[...r]:r):undefined,
             seatLeader:seatLeader?[...seatLeader]:undefined, seatVice:seatVice?[...seatVice]:undefined};
   });
@@ -1753,6 +2146,15 @@ function pasteSel(){
     if(d.color!==undefined) item.color=d.color;
     if(d.chairSize!==undefined) item.chairSize=d.chairSize;
     if(d.partIdx!==undefined) item.partIdx=d.partIdx;
+    if(d.fillColor!==undefined) item.fillColor=d.fillColor;
+    if(d.groupLabelFontSize!==undefined) item.groupLabelFontSize=d.groupLabelFontSize;
+    if(d.thickness!==undefined) item.thickness=d.thickness;
+    if(d.dividerColor!==undefined) item.dividerColor=d.dividerColor;
+    if(d.dividerThickness!==undefined) item.dividerThickness=d.dividerThickness;
+    if(d.arrowStyle!==undefined) item.arrowStyle=d.arrowStyle;
+    if(d.curvature!==undefined) item.curvature=d.curvature;
+    if(d.elbowRatio!==undefined) item.elbowRatio=d.elbowRatio;
+    if(d.elbowDir!==undefined) item.elbowDir=d.elbowDir;
     if(d.groupId){ if(!gidMap[d.groupId]) gidMap[d.groupId]='g'+(++uid); item.groupId=gidMap[d.groupId]; }
     if(d.src!==undefined) item.src=d.src;
     state.items.push(item); buildEl(item); addToSelection(item);
