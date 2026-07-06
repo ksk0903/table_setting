@@ -234,6 +234,9 @@
   .chair.vice .chair-name{border-color:#6E85AE;background:linear-gradient(180deg,#EEF2F8,#fff);
     box-shadow:0 0 0 2px rgba(110,133,174,.20),0 1px 3px rgba(45,33,20,.2);}
   body.dark .chair.vice .chair-name{background:linear-gradient(180deg,#26344a,#1D2530);border-color:#8AA3CC;}
+  /* 자리 고정(선생님 전용 표시): 편집 화면에서만 점선 표시, 이미지 저장 시엔 감춰서 학생들이 알 수 없게 함 */
+  .chair.pinned .chair-name{outline:1.5px dashed #6b7280;outline-offset:2px;}
+  .capturing .chair.pinned .chair-name{outline:none!important;}
   /* 추첨(제비뽑기) 애니메이션 칩 */
   .roll-chip{position:fixed;z-index:250;pointer-events:none;font-size:13px;font-weight:800;color:#5a4a2a;
     background:#fff;border:1.5px solid var(--accent);border-radius:11px;padding:3px 8px;white-space:nowrap;
@@ -384,6 +387,7 @@
 
   /* ===== Text font toolbar ===== */
   .text-toolbar{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:2px;
+    flex-wrap:wrap;max-width:260px;justify-content:center;
     background:#fff;border:1px solid var(--line-strong);border-radius:9px;padding:3px;z-index:21;
     box-shadow:0 3px 10px rgba(0,0,0,.15);}
   .text-toolbar button{font-family:inherit;font-weight:800;color:var(--ink);background:#fff;border:none;
@@ -396,6 +400,10 @@
   .text-toolbar .tt-swatch{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line-strong);
     background:#2b2118;display:block;}
   .text-toolbar .tt-color input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0;}
+  .text-toolbar .tt-presets{display:inline-flex;gap:3px;align-items:center;}
+  .text-toolbar .tt-preset{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.12);
+    padding:0;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .text-toolbar .tt-preset:hover{transform:scale(1.15);box-shadow:0 0 0 2px var(--accent-soft);}
   .capturing .text-toolbar{display:none!important;}
 
   /* 동선 화살표 툴바 (모양 전환 + 두께/색상/곡률/꺾임) */
@@ -1331,9 +1339,10 @@ function refreshTable(item){
   const badge = item.el.querySelector('.seat-badge');
   if(badge){
     if(item.type==='student-desk' || item.seats===1){
+      // 이름은 테이블(중앙)에는 표기하지 않고 의자 위치에만 표기
       badge.classList.add('name-badge');
       badge.classList.toggle('empty', !item.studentName);
-      badge.textContent = item.studentName || '';
+      badge.textContent = '';
     } else if(labelMode==='name'){
       // 모둠(여러 테이블 묶음)일 때는 대표 파트에만 모둠명 1개 표시
       const isPrimary = !item.groupId || (item.partIdx||0)===0;
@@ -1355,12 +1364,14 @@ function refreshTable(item){
   const names = item.seatNames || [];
   const leaders = item.seatLeader || [];
   const vices = item.seatVice || [];
+  const pins = item.seatPinned || [];
   chairsEl.innerHTML = chairPositions(item)
     .map((p,i)=>{
       const nm = (names[i]||'').trim();
       const isLeader = nm && !!leaders[i];
       const isVice = nm && !isLeader && !!vices[i];
-      const cls = 'chair' + (nm?' named':'') + (isLeader?' leader':'') + (isVice?' vice':'');
+      const isPinned = nm && !!pins[i];
+      const cls = 'chair' + (nm?' named':'') + (isLeader?' leader':'') + (isVice?' vice':'') + (isPinned?' pinned':'');
       let inner = '';
       if(nm){
         // 이름표를 테이블 바깥쪽으로 밀어 테이블에 가리지 않게 (크기가 변해도 유지)
@@ -1705,9 +1716,12 @@ function buildTableToolbar(){
   tableToolbar.className='text-toolbar';
   canvas.appendChild(tableToolbar);
 }
+const TABLE_COLOR_PRESETS = ['#EAD9BB','#F2A490','#F6D186','#A8D8B9','#9FC9E8','#C9B6E4','#F0A8B4','#B7C4D0'];
 function tableToolbarHTML(item){
   let html = `<label class="tt-color" title="테이블 색상"><span class="tt-swatch" id="tcSwatch"></span><input type="color" id="tableColorInput"></label>`
-    + `<button id="tableColorReset" title="색상 초기화" style="font-size:11px;padding:0 6px;">↺</button>`;
+    + `<button id="tableColorReset" title="색상 초기화" style="font-size:11px;padding:0 6px;">↺</button>`
+    + `<span class="tt-sep"></span>`
+    + `<span class="tt-presets">${TABLE_COLOR_PRESETS.map(c=>`<button class="tt-preset" data-preset="${c}" style="background:${c}" title="${c}"></button>`).join('')}</span>`;
   if(tableShowsNameLabel(item)){
     html += `<span class="tt-sep"></span><button data-d="-2" title="이름표 글자 작게">A−</button><span class="tt-val" id="tlSizeVal">14</span><button data-d="2" title="이름표 글자 크게">A+</button>`;
   }
@@ -1727,6 +1741,19 @@ function wireTableToolbar(item){
     const sw=document.getElementById('tcSwatch'); if(sw) sw.style.background=e.target.value;
   });
   ci.addEventListener('change', ()=> pushHistory());
+  tableToolbar.querySelectorAll('.tt-preset').forEach(pb=>{
+    pb.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+    pb.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!tableToolbarItem) return;
+      pushHistory();
+      const col=pb.dataset.preset;
+      tableToolbarItem.fillColor=col;
+      applyTableColor(tableToolbarItem);
+      const sw=document.getElementById('tcSwatch'); if(sw) sw.style.background=col;
+      const ciEl=document.getElementById('tableColorInput'); if(ciEl) ciEl.value=col;
+    });
+  });
   const rb=tableToolbar.querySelector('#tableColorReset');
   rb.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
   rb.addEventListener('click', e=>{
@@ -2063,7 +2090,7 @@ function editSeats(item){
     if(done) return; done=true;
     if(isName){
       const v=input.value.trim();
-      if(item.type==='student-desk'||item.seats===1) item.studentName=v;
+      if(item.type==='student-desk'||item.seats===1) setSeatName(item, 0, v);
       else {
         const gname = v || '모둠';
         if(item.groupId){ state.items.filter(i=>i.groupId===item.groupId).forEach(i=>{ i.groupName=gname; if(i!==item) rebuild(i); }); }
@@ -2116,12 +2143,12 @@ function addFromCatalog(def){
 /* ---------- Clipboard / delete ---------- */
 function copySel(){
   state.clipboard = [...state.selected].map(id=>{
-    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,seatNames,color,seatRecords,chairSize,partIdx,seatLeader,seatVice,fillColor,groupLabelFontSize,thickness,
+    const {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,seatNames,color,seatRecords,chairSize,partIdx,seatLeader,seatVice,seatPinned,fillColor,groupLabelFontSize,thickness,
            dividerColor,dividerThickness,arrowStyle,curvature,elbowRatio,elbowDir}=getItem(id);
     return {type,name,x,y,w,h,seats,text,rot,fontSize,roomLabel,seatSide,studentName,groupName,groupId,color,chairSize,partIdx,fillColor,groupLabelFontSize,thickness,
             dividerColor,dividerThickness,arrowStyle,curvature,elbowRatio,elbowDir,
             seatNames:seatNames?[...seatNames]:undefined, seatRecords:seatRecords?seatRecords.map(r=>r?[...r]:r):undefined,
-            seatLeader:seatLeader?[...seatLeader]:undefined, seatVice:seatVice?[...seatVice]:undefined};
+            seatLeader:seatLeader?[...seatLeader]:undefined, seatVice:seatVice?[...seatVice]:undefined, seatPinned:seatPinned?[...seatPinned]:undefined};
   });
 }
 function cutSel(){ if(!state.selected.size) return; copySel(); deleteSel(); }
@@ -2143,6 +2170,7 @@ function pasteSel(){
     if(d.seatRecords!==undefined) item.seatRecords=d.seatRecords.map(r=>r?[...r]:r);
     if(d.seatLeader!==undefined) item.seatLeader=[...d.seatLeader];
     if(d.seatVice!==undefined) item.seatVice=[...d.seatVice];
+    if(d.seatPinned!==undefined) item.seatPinned=[...d.seatPinned];
     if(d.color!==undefined) item.color=d.color;
     if(d.chairSize!==undefined) item.chairSize=d.chairSize;
     if(d.partIdx!==undefined) item.partIdx=d.partIdx;
@@ -2351,6 +2379,9 @@ const CTX_ICON={
   leaderOff:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px;opacity:.55">👑</span>',
   viceOn:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px">🥈</span>',
   viceOff:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px;opacity:.55">🥈</span>',
+  pinAssign:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px">📌</span>',
+  pinOn:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px">📌</span>',
+  pinOff:'<span style="width:15px;display:inline-flex;justify-content:center;font-size:13px;opacity:.55">📌</span>',
   seatClear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l6-6m8-8l3.5 3.5a2 2 0 0 1 0 2.8L12 22H7l-4-4L14.5 6.5a2 2 0 0 1 2.8 0Z"/></svg>'
 };
 function ctxRow(act,label,kbd,opts){
@@ -2369,22 +2400,29 @@ function showCtx(html, x, y){
 canvas.addEventListener('contextmenu', e=>{
   if(e.target.closest('.seat-input') || (e.target.closest('[contenteditable="true"]'))) return; // 입력 중엔 기본 메뉴
   e.preventDefault();
-  const chairEl = e.target.closest && e.target.closest('.chair.named');
+  const chairEl = e.target.closest && e.target.closest('.chair');
   if(chairEl){
     const itemEl = chairEl.closest('.item'); const item = state.items.find(s=>s.el===itemEl);
-    if(item){
+    if(item && hasChairs(item)){
       const idx = parseInt(chairEl.dataset.seat,10);
       if(!state.selected.has(item.id)) selectG(item);
-      const isLeader = getSeatLeader(item, idx);
-      const isVice = getSeatVice(item, idx);
       const nm = (item.seatNames&&item.seatNames[idx])||'';
-      showCtx(
-        `<div class="ctx-item" style="pointer-events:none;color:var(--muted);font-size:11px;padding:5px 10px 3px">${escapeHtml(nm)}</div>`+
-        ctxRow(isLeader?'leaderOff':'leaderOn', isLeader?'반장 해제':'반장으로 지정','')+
-        ctxRow(isVice?'viceOff':'viceOn', isVice?'부반장 해제':'부반장으로 지정','')+
-        `<div class="ctx-sep"></div>`+
-        ctxRow('seatClear','이 자리 비우기','',{danger:true}),
-        e.clientX, e.clientY);
+      const isPinned = getSeatPinned(item, idx);
+      let rows='';
+      if(nm){
+        const isLeader = getSeatLeader(item, idx);
+        const isVice = getSeatVice(item, idx);
+        rows += `<div class="ctx-item" style="pointer-events:none;color:var(--muted);font-size:11px;padding:5px 10px 3px">${escapeHtml(nm)}</div>`
+          + ctxRow(isLeader?'leaderOff':'leaderOn', isLeader?'반장 해제':'반장으로 지정','')
+          + ctxRow(isVice?'viceOff':'viceOn', isVice?'부반장 해제':'부반장으로 지정','')
+          + `<div class="ctx-sep"></div>`
+          + ctxRow(isPinned?'pinOff':'pinOn', isPinned?'자리 고정 해제':'이 자리 고정하기','')
+          + `<div class="ctx-sep"></div>`
+          + ctxRow('seatClear','이 자리 비우기','',{danger:true});
+      } else {
+        rows += ctxRow('pinAssign','학생 고정 배정…','');
+      }
+      showCtx(rows, e.clientX, e.clientY);
       ctxMenu.dataset.seatItem = item.id; ctxMenu.dataset.seatIdx = idx;
       return;
     }
@@ -2415,14 +2453,29 @@ canvas.addEventListener('contextmenu', e=>{
 ctxMenu.addEventListener('click', e=>{
   const row=e.target.closest('.ctx-item'); if(!row || row.classList.contains('disabled')) return;
   const act = row.dataset.action;
-  if(act==='leaderOn' || act==='leaderOff' || act==='viceOn' || act==='viceOff' || act==='seatClear'){
+  if(act==='pinAssign'){
+    const item=getItem(ctxMenu.dataset.seatItem); const idx=parseInt(ctxMenu.dataset.seatIdx,10);
+    hideCtx();
+    if(!item || isNaN(idx)) return;
+    const name = prompt('이 자리에 고정 배정할 학생 이름을 입력하세요.\n(랜덤배정을 실행해도 이 학생은 이 자리에 그대로 유지됩니다)','');
+    if(name===null) return;
+    const trimmed=name.trim();
+    if(!trimmed) return;
+    pushHistory();
+    setSeatRecord(item, idx, trimmed, null);
+    setSeatPinnedFlag(item, idx, true);
+    rebuild(item); refreshRoster();
+    return;
+  }
+  if(act==='leaderOn' || act==='leaderOff' || act==='viceOn' || act==='viceOff' || act==='pinOn' || act==='pinOff' || act==='seatClear'){
     const item=getItem(ctxMenu.dataset.seatItem); const idx=parseInt(ctxMenu.dataset.seatIdx,10);
     hideCtx();
     if(!item || isNaN(idx)) return;
     pushHistory();
-    if(act==='seatClear'){ setSeatRecord(item, idx, '', null); setSeatLeaderFlag(item, idx, false); setSeatViceFlag(item, idx, false); }
+    if(act==='seatClear'){ setSeatRecord(item, idx, '', null); setSeatLeaderFlag(item, idx, false); setSeatViceFlag(item, idx, false); setSeatPinnedFlag(item, idx, false); }
     else if(act==='leaderOn' || act==='leaderOff'){ setSeatLeaderFlag(item, idx, act==='leaderOn'); }
-    else { setSeatViceFlag(item, idx, act==='viceOn'); }
+    else if(act==='viceOn' || act==='viceOff'){ setSeatViceFlag(item, idx, act==='viceOn'); }
+    else { setSeatPinnedFlag(item, idx, act==='pinOn'); }
     rebuild(item); refreshRoster();
     return;
   }
@@ -2459,10 +2512,10 @@ function chairRefAt(x,y){
   return {item, idx:parseInt(chair.dataset.seat,10), chair};
 }
 function swapSeats(a,ai,b,bi){
-  const an=(a.seatNames&&a.seatNames[ai])||'', ar=(a.seatRecords&&a.seatRecords[ai])||null, al=getSeatLeader(a,ai), av=getSeatVice(a,ai);
-  const bn=(b.seatNames&&b.seatNames[bi])||'', br=(b.seatRecords&&b.seatRecords[bi])||null, bl=getSeatLeader(b,bi), bv=getSeatVice(b,bi);
-  setSeatRecord(a,ai,bn,br); setSeatLeaderFlag(a,ai,bl); setSeatViceFlag(a,ai,bv);
-  setSeatRecord(b,bi,an,ar); setSeatLeaderFlag(b,bi,al); setSeatViceFlag(b,bi,av);
+  const an=(a.seatNames&&a.seatNames[ai])||'', ar=(a.seatRecords&&a.seatRecords[ai])||null, al=getSeatLeader(a,ai), av=getSeatVice(a,ai), ap=getSeatPinned(a,ai);
+  const bn=(b.seatNames&&b.seatNames[bi])||'', br=(b.seatRecords&&b.seatRecords[bi])||null, bl=getSeatLeader(b,bi), bv=getSeatVice(b,bi), bp=getSeatPinned(b,bi);
+  setSeatRecord(a,ai,bn,br); setSeatLeaderFlag(a,ai,bl); setSeatViceFlag(a,ai,bv); setSeatPinnedFlag(a,ai,bp);
+  setSeatRecord(b,bi,an,ar); setSeatLeaderFlag(b,bi,al); setSeatViceFlag(b,bi,av); setSeatPinnedFlag(b,bi,ap);
 }
 canvas.addEventListener('mousedown', e=>{
   if(e.button!==0) return;
@@ -2768,7 +2821,25 @@ function getSeatLeader(item, idx){ return !!(item.seatLeader && item.seatLeader[
 function setSeatLeaderFlag(item, idx, val){ if(!item.seatLeader) item.seatLeader=[]; item.seatLeader[idx]=!!val; if(val) setSeatViceFlag(item, idx, false); }
 function getSeatVice(item, idx){ return !!(item.seatVice && item.seatVice[idx]); }
 function setSeatViceFlag(item, idx, val){ if(!item.seatVice) item.seatVice=[]; item.seatVice[idx]=!!val; if(val) { if(item.seatLeader) item.seatLeader[idx]=false; } }
-function clearSeats(item){ item.seatNames=[]; item.seatRecords=[]; item.seatLeader=[]; item.seatVice=[]; if(item.type==='student-desk'||item.seats===1) item.studentName=''; }
+function getSeatPinned(item, idx){ return !!(item.seatPinned && item.seatPinned[idx]); }
+function setSeatPinnedFlag(item, idx, val){ if(!item.seatPinned) item.seatPinned=[]; item.seatPinned[idx]=!!val; }
+function clearSeats(item){ item.seatNames=[]; item.seatRecords=[]; item.seatLeader=[]; item.seatVice=[]; item.seatPinned=[]; if(item.type==='student-desk'||item.seats===1) item.studentName=''; }
+// 자동배정(랜덤/모둠순) 전 초기화: 고정된 자리는 이름·기록을 그대로 유지
+function clearSeatsExceptPinned(item){
+  const n=Math.max(1,item.seats||1);
+  const keptNames=[], keptRecords=[], keptLeader=[], keptVice=[], keptPinned=[];
+  for(let i=0;i<n;i++){
+    if(getSeatPinned(item,i)){
+      keptNames[i]=(item.seatNames&&item.seatNames[i])||'';
+      keptRecords[i]=(item.seatRecords&&item.seatRecords[i])||null;
+      keptLeader[i]=!!(item.seatLeader&&item.seatLeader[i]);
+      keptVice[i]=!!(item.seatVice&&item.seatVice[i]);
+      keptPinned[i]=true;
+    }
+  }
+  item.seatNames=keptNames; item.seatRecords=keptRecords; item.seatLeader=keptLeader; item.seatVice=keptVice; item.seatPinned=keptPinned;
+  if((item.type==='student-desk'||item.seats===1) && !getSeatPinned(item,0)) item.studentName='';
+}
 
 /* ---------- 성별 분류 & 정렬 (#3) ---------- */
 function classifyGender(v){
@@ -2927,13 +2998,22 @@ function doAssign(mode){    // mode: 'random' | 'sequential'
   }
   if(!records.length){ alert('명단을 먼저 입력하거나 엑셀을 불러와 주세요.'); return; }
 
+  // 이미 고정된 자리의 학생은 명단 풀에서 제외 (다른 자리에 중복 배정되지 않도록)
+  const pinnedNames = new Set();
+  units.forEach(u=> u.items.forEach(it=>{
+    const n=Math.max(1, it.seats||1);
+    for(let i=0;i<n;i++){ if(getSeatPinned(it,i)){ const nm=((it.seatNames&&it.seatNames[i])||'').trim(); if(nm) pinnedNames.add(nm); } }
+  }));
+  const poolRecords = records.filter(rec=> !pinnedNames.has(String(rec[nameCol]==null?'':rec[nameCol]).trim()));
+
   const genderMode=(document.getElementById('rosterGenderMode')||{}).value || 'basic';
   if(genderMode!=='basic' && genderCol==null){
     alert('성별 열을 찾을 수 없어 자유배정으로 진행합니다.\n(엑셀 "성별" 열에 남/여를 채워 불러오면 혼성·동성 배정을 쓸 수 있어요)');
   }
-  const ordered=orderRecordsByGender(records, (genderMode!=='basic')?genderCol:null, genderMode, mode==='random');
+  const ordered=orderRecordsByGender(poolRecords, (genderMode!=='basic')?genderCol:null, genderMode, mode==='random');
 
-  const refs=[]; units.forEach(u=> unitSeatRefs(u).forEach(r=>refs.push(r)));
+  // 고정된 자리는 배정 대상 좌석 풀에서 제외 (이미 채워진 상태 그대로 유지)
+  const refs=[]; units.forEach(u=> unitSeatRefs(u).forEach(r=>{ if(!getSeatPinned(r.item, r.idx)) refs.push(r); }));
   const cells=ordered.slice(0, refs.length).map((rec,i)=>({
     item:refs[i].item, idx:refs[i].idx,
     name:String(rec[nameCol]==null?'':rec[nameCol]).trim(),
@@ -2942,7 +3022,7 @@ function doAssign(mode){    // mode: 'random' | 'sequential'
   }));
 
   pushHistory();
-  units.forEach(u=> u.items.forEach(it=>{ clearSeats(it); rebuild(it); }));
+  units.forEach(u=> u.items.forEach(it=>{ clearSeatsExceptPinned(it); rebuild(it); }));
   setAssignUIBusy(true);
   const reveal = appMode==='school' ? revealAssignmentFloat : revealAssignment;
   reveal(cells).then(()=>{
